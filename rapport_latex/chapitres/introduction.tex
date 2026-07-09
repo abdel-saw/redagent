@@ -1,0 +1,20 @@
+\chapter*{Introduction générale}
+\addcontentsline{toc}{chapter}{Introduction générale}
+\markboth{Introduction générale}{}
+
+En quelques années, les grands modèles de langage sont sortis des laboratoires pour se glisser au cœur d'applications bien réelles~: assistants, moteurs de recherche conversationnels, et désormais agents capables d'appeler des outils ou d'agir sur un système. Cette diffusion rapide a une contrepartie que la sécurité applicative traditionnelle peine à saisir. Là où un pare-feu ou une validation de schéma supposent une frontière nette entre code et données, une application LLM n'a pas cette frontière~: l'instruction de confiance et l'entrée hostile cohabitent dans la même fenêtre de contexte, en langage naturel.
+
+De ce constat naît le besoin de \emph{red teaming} — l'attaque offensive contrôlée d'un système pour en révéler les faiblesses. Le domaine est actif~: méthodes d'attaque automatisées, frameworks outillés, jeux de données. Pourtant, en examinant la littérature et les outils, un déséquilibre frappe. On sait produire des attaques de plus en plus ingénieuses, mais on mesure leur succès avec une désinvolture surprenante~: souvent, c'est un \emph{autre} modèle de langage qui décrète si une attaque a réussi. La fiabilité d'un tel juge a bien été étudiée pour des tâches de \emph{qualité} ou de \emph{préférence} (le courant \emph{LLM-as-a-judge}), mais presque jamais pour l'usage qui décide ici du résultat~: l'arbitrage binaire du succès d'une attaque, et moins encore contre une vérité-terrain humaine.
+
+% >>> À RÉÉCRIRE TOI-MÊME (priorité HAUTE) :
+% Ce paragraphe raconte TON parcours V1 -> V2. Mets-y tes mots : ce que tu as
+% ressenti en réalisant que ta première version se validait sur tes propres
+% cibles, la discussion avec ton encadrant, le déclic. C'est le passage qui
+% « humanise » le plus l'introduction.
+Ce mémoire porte la trace d'un tel cheminement. Une première version de ce projet visait à construire un agent capable de rivaliser avec les outils existants, et l'évaluait sur trois cibles que j'avais moi-même rendues vulnérables. La démonstration tournait en rond~: l'outil réussissait sur des cibles taillées pour lui, et son verdict reposait sur un juge dont rien ne garantissait la justesse. Le recentrage qui a suivi constitue le cœur de ce travail~: déplacer l'ambition de la \emph{force de l'attaque} vers la \emph{rigueur de la mesure}.
+
+L'objectif n'est donc plus de gagner, mais d'instrumenter honnêtement le succès. Deux livrables en découlent. D'une part, \textbf{RedAgent}, un agent de red teaming volontairement léger, fondé sur le principe \emph{Bring Your Own Key}, observable, et aligné sur le référentiel OWASP Top~10 for LLM Applications. D'autre part — et c'est la contribution scientifique — une \textbf{méthodologie d'évaluation indépendante de l'outil}, qui sépare strictement un \emph{oracle déterministe} (la vérité-terrain objective du succès) d'un \emph{juge LLM} dont la fiabilité est cette fois mesurée, contre l'oracle puis contre un jugement humain.
+
+Cette méthodologie est ensuite mise à l'épreuve selon une progression par paliers, chacun validé avant le suivant~: fondations (oracle, juge, vérité-terrain humaine), puis validation sur une seconde cible tierce et indépendante, enfin comparaison pré-enregistrée à un framework de référence, PyRIT. À chaque étape, une affirmation du mémoire est adossée à une mesure, jamais simplement postulée.
+
+Le document s'organise en quatre chapitres. Le \textbf{chapitre~\ref*{chap:contexte}} situe le contexte et dresse l'état de l'art~; le \textbf{chapitre~\ref*{chap:conception}} présente la conception, des besoins fonctionnels au découplage oracle/juge~; le \textbf{chapitre~\ref*{chap:technique}} détaille la réalisation technique~; le \textbf{chapitre~\ref*{chap:realisation}} rapporte les expériences et leurs résultats. La conclusion revient sur la portée du travail et ses limites.

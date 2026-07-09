@@ -1,0 +1,46 @@
+# --- Secrets / BYOK (NE JAMAIS COMMITER) ---
+config.txt
+.env
+.env.*
+*.key
+secrets.*
+
+# --- Environnements virtuels (lourds, régénérables) ---
+.venv/
+.venv_garak/
+.venv_pyrit/
+venv/
+env/
+
+# --- Caches Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# --- Artefacts de compilation LaTeX ---
+*.aux
+*.fdb_latexmk
+*.fls
+*.log
+*.out
+*.toc
+*.lof
+*.lot
+*.synctex.gz
+*.bbl
+*.blg
+*.nav
+*.snm
+*.vrb
+
+# --- Copies de sauvegarde ---
+*- Copy.*
+*.bak
+*~
+
+# --- OS ---
+.DS_Store
+Thumbs.db

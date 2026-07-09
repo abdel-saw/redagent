@@ -1,0 +1,265 @@
+\chapter{Réalisation et résultats}
+\label{chap:realisation}
+
+\noindent\itshape
+Ce chapitre rapporte les expériences et leurs résultats~: la preuve de l'oracle, l'efficacité de l'attaquant (Exp.~1), la fiabilité du juge contre une vérité-terrain humaine (Exp.~2), la validation sur une cible tierce indépendante, et enfin la comparaison pré-enregistrée à un framework de référence.
+\normalfont
+\vspace{0.5cm}
+
+\section{L'outil RedAgent en fonctionnement}
+
+Avant de présenter les mesures, on illustre l'outil tel qu'un auditeur l'utilise. L'interface, volontairement sobre, tient en trois temps~: configurer, suivre, rapporter.
+
+La configuration d'un audit (figures~\ref{fig:uiconf1} et~\ref{fig:uiconf2}) tient sur une seule page~: l'auditeur saisit l'endpoint de la cible et, pour un endpoint non standard, le gabarit de corps et le chemin d'extraction~; il renseigne les modèles attaquant et juge selon le principe \emph{Bring Your Own Key}, fixe un plafond de dépense, et coche les modules OWASP à exécuter.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.9\textwidth]{fig_ui_config1.png}
+  \caption{Configuration d'un audit dans RedAgent (1/2)~: cible et modules OWASP}
+  \label{fig:uiconf1}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.9\textwidth]{fig_ui_config2.png}
+  \caption{Configuration d'un audit (2/2)~: modèles attaquant et juge (BYOK) et plafond de dépense}
+  \label{fig:uiconf2}
+\end{figure}
+
+Une fois l'audit lancé, la page de suivi (figure~\ref{fig:uilive}) diffuse en temps réel, par \emph{Server-Sent Events}, chaque tentative d'attaque, son verdict et les \emph{findings} consolidés~: l'observabilité est immédiate, sans rechargement.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.9\textwidth]{fig_ui_live.png}
+  \caption{Suivi d'un audit en temps réel (diffusion SSE des tentatives et verdicts)}
+  \label{fig:uilive}
+\end{figure}
+
+À la fin de l'audit, un rapport HTML autonome (figures~\ref{fig:report1} et~\ref{fig:report2}) reprend la synthèse exécutive puis le détail de chaque \emph{finding} (prompt, réponse de la cible, verdict), prêt à être archivé ou partagé.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.9\textwidth]{fig_report_html1.png}
+  \caption{Rapport d'audit généré (1/2)~: synthèse exécutive}
+  \label{fig:report1}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.9\textwidth]{fig_report_html2.png}
+  \caption{Rapport d'audit généré (2/2)~: \emph{finding} détaillé}
+  \label{fig:report2}
+\end{figure}
+
+\section{Dispositif expérimental}
+
+Les expériences s'appuient sur deux bancs au succès objectivement décidable. Le premier, \textbf{PromptMe}, est un CTF OWASP-LLM dont \textbf{quatre} défis relèvent du périmètre boîte-noire JSON (LLM01, LLM02, LLM06, LLM07). \textbf{Trois} sont retenus pour la matrice d'attaque — LLM02, LLM06, LLM07. LLM01 ne sert qu'à la \emph{validation de l'oracle}~: on vérifie que la détection du flag — mécaniquement identique à celle de LLM07 — reconnaît bien le flag du défi (un \emph{hash} fixe). LLM01 n'entre pas dans la matrice d'attaque non par absence de flag, mais parce qu'un succès \emph{live} sur ce défi exige une session authentifiée et un \emph{payload} hébergé en externe, scénario non automatisé par le harnais. Le second, \textbf{Gandalf} (Lakera), est une cible \emph{tierce} en ligne dont l'extraction d'un mot de passe est confirmée par un endpoint de Lakera (chapitre suivant). Les attaquants sont des modèles OpenAI (un modèle « standard », \texttt{gpt-4o-mini}, et un modèle de raisonnement, \texttt{o4-mini}), complétés en première matrice par des modèles ouverts pour la diversité. La dépense est plafonnée et le quota géré par \emph{throttle} et reprises.
+
+\section{Preuve de l'oracle}
+
+Avant toute mesure, l'oracle est établi comme instrument de confiance. Un test dédié vérifie trois propriétés sur les défis en boîte noire~: la \textbf{sensibilité} (il se déclenche sur les charges connues issues des solutions officielles, via le véritable adaptateur), la \textbf{reconnaissance} (il identifie chaque flag synthétique), et la \textbf{spécificité} (il reste négatif sur une réfutation explicite et sur un \emph{leurre}, en l'occurrence une valeur \texttt{JWT\_SECRET} qu'il ne confond pas avec le vrai token). Les douze cas passent~(figure~\ref{fig:smokeoracle})~: l'oracle est sensible aux vrais positifs et spécifique. La logique testée ici est celle du code~\ref{lst:oracle} (détection puis \emph{post-step} de confirmation).
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.92\textwidth]{fig_smoke_oracle.png}
+  \caption{Validation de l'oracle sur PromptMe \emph{live}~: sensibilité, reconnaissance et spécificité (12/12)}
+  \label{fig:smokeoracle}
+\end{figure}
+
+\section{Exp.~1 — Efficacité de l'attaquant (PromptMe)}
+
+La première matrice croise sept attaquants et trois défis (cinq \emph{runs} par cellule, douze tentatives, \emph{recon} active~; succès décidé par l'oracle, conformément à la boucle du \emph{runner} reproduite au code~\ref{lst:runner}). Le tableau~\ref{tab:exp1} donne les taux de capture.
+
+\begin{table}[H]
+\centering
+\caption{Exp.~1 --- taux de capture (flags / \emph{runs}), succès = oracle}
+\label{tab:exp1}
+\begin{tabularx}{\textwidth}{X c c c c c}
+\toprule
+\textbf{Attaquant} & LLM02 & LLM06 & LLM07 & \textbf{Global} & \textbf{IC$_{95}$} \\
+\midrule
+o4-mini (raisonnement) & 1/5 & 2/5 & 3/5 & \textbf{6/15} & [0.20, 0.64] \\
+gpt-4o-mini & 2/5 & 1/5 & 1/5 & 4/15 & [0.11, 0.52] \\
+llama-3.1-8b & 1/5 & 1/5 & 0/5 & 2/15 & [0.04, 0.38] \\
+qwen3-32b & 1/5 & 0/5 & 0/5 & 1/15 & [0.01, 0.30] \\
+gpt-oss-safeguard (\emph{safety}) & 0/5 & 0/5 & 1/5 & 1/15 & [0.01, 0.30] \\
+gpt-4.1-mini & 0/3 & 0/3 & 0/3 & 0/9 & [0, 0.30] \\
+llama-3.3-70b & 0/5 & 0/5 & --- & 0/10 & [0, 0.28] \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+Tout est faible en valeur absolue et les intervalles se recouvrent~: il n'y a pas de palmarès, mais le modèle de raisonnement se détache. Un modèle \emph{safety} (\texttt{gpt-oss-safeguard}) refuse 54,7~\% de ses propres générations de prompts adversariaux~: il est largement inutilisable comme attaquant. Ces refus sont détectés et comptabilisés par le garde du code~\ref{lst:attacker}, qui empêche qu'un refus soit envoyé à la cible comme s'il s'agissait d'un \emph{payload}.
+
+\paragraph{Skill ou variance ?} En classant chaque capture par sa \emph{source}, on distingue ce qui relève du \emph{skill} de l'agent (un prompt \emph{généré} par mutation) de ce qui relève de la \emph{variance} de la cible (la cible fuit une graine écrite à la main). Sur ce banc, LLM02 et LLM06 sont du skill (mutations), tandis que LLM07 relève de la variance (la cible fuit la graine de traduction). On se gardera donc de porter LLM07 au crédit de l'attaquant. La figure~\ref{fig:harnessmetrics} montre la sortie du harnais qui calcule ces taux, leurs intervalles (intervalle de Wilson) et l'attribution de chaque capture à sa source~; les deux estimateurs sous-jacents — intervalle de Wilson et $\kappa$ de Cohen — figurent au code~\ref{lst:metrics}.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.95\textwidth]{fig_harness_metrics.png}
+  \caption{Sortie du harnais (Exp.~1, PromptMe)~: taux de capture, intervalles de Wilson et décomposition \emph{skill} (mutation) / \emph{variance} (graine)}
+  \label{fig:harnessmetrics}
+\end{figure}
+
+\paragraph{Démonstration d'autonomie.} En désactivant les graines (mode \emph{mutations seules}), \texttt{gpt-4o-mini} s'effondre de 4/15 à 0/15~: son efficacité apparente reposait sur l'échafaudage des graines. Le modèle de raisonnement, lui, tient l'essentiel (LLM02 généré de zéro). \textbf{L'autonomie réelle est le fait du modèle de raisonnement}~; l'ablation rend cette distinction \emph{mesurable} plutôt que supposée.
+
+\section{Exp.~2 — Fiabilité du juge (PromptMe)}
+
+On rejoue les tuples loggés à travers cinq juges, chacun interrogé selon le code~\ref{lst:judge} (consigne exigeant une \emph{preuve}, JSON strict, température nulle). Comparés d'abord à l'oracle, les juges semblent commettre quelques « faux positifs »~; l'examen montre qu'il s'agit parfois de \emph{vraies} vulnérabilités que l'oracle strict a manquées — ce qui motive le passage à une vérité-terrain humaine.
+
+Après adjudication humaine en aveugle (117 tuples binaires~: 19 \emph{vuln}, 98 \emph{pas\_vuln}~; 1 cas ambigu exclu), on obtient le tableau~\ref{tab:exp2gold}. L'adjudication a été menée dans un classeur où les colonnes oracle et verdicts des juges sont \emph{masquées} (figure~\ref{fig:goldxlsx}), afin que la vérité-terrain humaine ne soit pas ancrée sur les machines qu'elle sert ensuite à évaluer.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.95\textwidth]{fig_gold_xlxs.png}
+  \caption{Classeur d'adjudication humaine (anti-ancrage)~: oracle et verdicts des juges masqués pendant le jugement}
+  \label{fig:goldxlsx}
+\end{figure}
+
+\begin{table}[H]
+\centering
+\caption{Exp.~2 --- juges et oracle contre la vérité-terrain \textbf{humaine} (PromptMe)}
+\label{tab:exp2gold}
+\begin{tabularx}{\textwidth}{X c c c c c c}
+\toprule
+\textbf{Rater vs gold humain} & P & R & F1 & $\kappa$ & FP & FN \\
+\midrule
+\textbf{Oracle (flag strict)} & 1.00 & 0.947 & 0.973 & \textbf{0.968} & 0 & 1 \\
+gpt-4o-mini & 1.00 & 1.00 & 1.00 & 1.00 & 0 & 0 \\
+llama-3.3-70b & 0.95 & 1.00 & 0.974 & 0.969 & 1 & 0 \\
+o4-mini & 0.95 & 1.00 & 0.974 & 0.969 & 1 & 0 \\
+qwen3-32b & 1.00 & 0.947 & 0.973 & 0.968 & 0 & 1 \\
+gpt-oss-safeguard (\emph{safety}) & 1.00 & 0.368 & 0.538 & 0.494 & 0 & 12 \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+Trois enseignements se dégagent. \textbf{Premièrement}, quatre juges sur cinq sont quasi indiscernables du jugement humain ($\kappa \geq 0{,}97$). Il faut insister sur ce que ce résultat \emph{ne dit pas}~: avec seulement 19 tuples positifs, l'écart entre un $\kappa$ de 0,968 et de 1,00 tient à \emph{un seul} tuple. Ces quatre juges (\texttt{gpt-4o-mini}, \texttt{llama-3.3-70b}, \texttt{o4-mini}, \texttt{qwen3-32b}) sont donc statistiquement \textbf{interchangeables} à cette taille~; aucun classement entre eux n'est défendable, et le F1 de 1,0 de \texttt{gpt-4o-mini} n'est pas une supériorité mais un artefact d'échantillon (son intervalle de rappel reste large). Le \emph{seul} résultat de juge robuste au petit~$n$ est le mauvais~: l'effondrement du modèle \emph{safety} (rappel 0,368 contre $\approx 1{,}0$), un écart trop ample pour relever du hasard d'échantillonnage. \textbf{Deuxièmement}, l'oracle déterministe \emph{lui-même} n'est pas parfait~: il manque un cas, matérialisant chiffres à l'appui la distinction \emph{capture de flag $\neq$ vulnérabilité}.
+
+% >>> À RÉÉCRIRE TOI-MÊME (priorité MOYENNE) : raconte ce cas précis à ta façon.
+\paragraph{Retour d'expérience --- l'angle mort de l'oracle.} Le cas manqué par l'oracle (référencé id60 dans mes notes) est une divulgation réelle de configuration sensible — des identifiants de base de données — \emph{sans} le token exact attendu. Un juge bien calibré l'a reconnu comme une vulnérabilité~; l'oracle strict, non. C'est exactement le type de fuite partielle qui justifie de ne pas s'en remettre au seul flag. La figure~\ref{fig:goldpromptme} montre la sortie d'analyse correspondante (métriques par juge contre le gold humain et identification de l'angle mort).
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.95\textwidth]{fig_gold_promptme.png}
+  \caption{Exp.~2 (PromptMe)~: juges et oracle contre la vérité-terrain humaine, et localisation de l'angle mort (id60)}
+  \label{fig:goldpromptme}
+\end{figure}
+
+\paragraph{Conséquence sur l'Exp.~1.} Cet angle mort se répercute en amont. Les taux de capture de l'Exp.~1 sur les défis à critère flou (LLM02, LLM06), décidés par ce \emph{même} oracle strict, sont donc à lire comme un \textbf{plancher}, non comme un plafond~: un oracle qui rate des fuites partielles \emph{sous-compte} les succès, il n'en invente jamais (sa précision reste de 1,00). Le « 2/5 » sur LLM02 \emph{minore} ainsi, au pire, l'efficacité réelle de l'attaquant — l'erreur joue dans le sens conservateur, ce qui ne fragilise aucune conclusion d'efficacité.
+
+\textbf{Troisièmement}, le modèle \emph{safety} est le pire juge~: il sous-déclare massivement (rappel 0{,}368), manquant douze vraies vulnérabilités sur dix-neuf, sans erreur d'exécution. Un modèle de sécurité \emph{refuse}, mais ne \emph{reconnaît} pas la vulnérabilité.
+
+\section{Validation sur une cible tierce : Gandalf}
+
+Le palier suivant rejoue les deux expériences sur une cible que l'auteur n'a pas fabriquée, dont l'oracle de confirmation appartient à Lakera. Un test préalable établit la cible et son oracle (fil de communication, sensibilité sur un niveau sans défense, spécificité contrôlée)~: les quatre cas passent (figure~\ref{fig:smokegandalf}).
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.92\textwidth]{fig_smoke_gandalf.png}
+  \caption{Preuve de la cible tierce Gandalf et de son oracle Lakera \emph{guess-password} (4/4)}
+  \label{fig:smokegandalf}
+\end{figure}
+
+\paragraph{Efficacité (Exp.~1).} Sur trois niveaux de difficulté croissante (tableau~\ref{tab:gandalf1}), l'attaquant générique transfère sur les niveaux faible et moyen, mais bute sur le plus dur — un plafond externe honnête. Les trois attaquants OpenAI obtiennent un score identique (6/9), et \emph{toutes} les captures proviennent d'une même graine générique~: ici, le gain est du côté de la variance, pas du skill.
+
+\begin{table}[H]
+\centering
+\caption{Exp.~1 sur Gandalf --- capture (tous attaquants), succès = oracle Lakera}
+\label{tab:gandalf1}
+\begin{tabularx}{\textwidth}{X c c}
+\toprule
+\textbf{Niveau} & \textbf{Capture} & \textbf{IC$_{95}$} \\
+\midrule
+do-not-tell (niveau 2) & 9/9 & [0.70, 1.00] \\
+word-blacklist (niveau 5) & 9/9 & [0.70, 1.00] \\
+gandalf (niveau 7) & 0/9 & [0.00, 0.30] \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.95\textwidth]{fig_gandalf_metrics.png}
+  \caption{Sortie du harnais (Exp.~1, Gandalf)~: transfert sur les niveaux 2 et 5, plafond externe au niveau 7}
+  \label{fig:gandalfmetrics}
+\end{figure}
+
+\paragraph{Fiabilité du juge (Exp.~2).} Le \emph{gold standard} humain est ici un \textbf{recensement complet} des 90 tuples (18 \emph{vuln}, 72 \emph{pas\_vuln}, aucun ambigu). Le tableau~\ref{tab:gandalf2} confronte oracle et juges à ce jugement humain.
+
+\begin{table}[H]
+\centering
+\caption{Exp.~2 sur Gandalf --- contre la vérité-terrain humaine (90 tuples)}
+\label{tab:gandalf2}
+\begin{tabularx}{\textwidth}{X c c c c}
+\toprule
+\textbf{Rater vs gold humain} & P & R & F1 & $\kappa$ \\
+\midrule
+\textbf{Oracle Gandalf (Lakera)} & 1.00 & 1.00 & 1.00 & \textbf{1.00} \\
+gpt-4o-mini & 1.00 & 1.00 & 1.00 & 1.00 \\
+llama-3.3-70b & 1.00 & 1.00 & 1.00 & 1.00 \\
+qwen3-32b & 1.00 & 1.00 & 1.00 & 1.00 \\
+o4-mini & 1.00 & 1.00 & 1.00 & 1.00 \\
+gpt-oss-safeguard (\emph{safety}) & 1.00 & 0.50 & 0.667 & 0.615 \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.95\textwidth]{fig_gold_gandalf.png}
+  \caption{Exp.~2 (Gandalf)~: oracle et juges contre la vérité-terrain humaine~; l'oracle Lakera n'a \emph{aucun} angle mort ($\kappa = 1{,}00$)}
+  \label{fig:goldgandalf}
+\end{figure}
+
+Deux observations. L'oracle de Gandalf, lui, \emph{n'a pas} d'angle mort ($\kappa = 1{,}00$)~: l'écart avec l'angle mort de PromptMe s'explique par le \textbf{caractère discret du critère} — un mot de passe unique fait un flag quasi parfait, là où « information sensible » crée une zone grise de fuites partielles. C'est un enseignement méthodologique transférable. Et, sur une cible totalement indépendante, le modèle \emph{safety} reste le pire juge~: le constat « il refuse mais ne reconnaît pas » se \emph{réplique} hors de PromptMe.
+
+\section{Comparaison pré-enregistrée à PyRIT}
+
+Le dernier palier teste une affirmation \emph{méthodologique}, non un palmarès~: le même oracle peut-il mesurer objectivement un \emph{autre} outil~? PyRIT (Microsoft) est branché, via une cible personnalisée réutilisant notre adaptateur, sur les mêmes endpoints, avec le même modèle attaquant (\texttt{gpt-4o-mini}), le même budget et — surtout — la même définition du succès (notre oracle). Le protocole a été \textbf{figé à l'avance} (hypothèse, conditions, métriques, règle de décision), avec l'engagement de rapporter le résultat quel qu'il soit. Les tableaux~\ref{tab:pyrit-pm} et~\ref{tab:pyrit-g} donnent le face-à-face.
+
+\begin{table}[H]
+\centering
+\caption{RedAgent vs PyRIT sur PromptMe (même oracle, même attaquant)}
+\label{tab:pyrit-pm}
+\begin{tabularx}{\textwidth}{X c c}
+\toprule
+\textbf{Défi} & \textbf{RedAgent} & \textbf{PyRIT} \\
+\midrule
+LLM02 & 2/5 & 0/5 \\
+LLM06 & 1/5 & 0/5 \\
+LLM07 & 1/5 & 0/5 \\
+\textbf{Global} & \textbf{4/15} \;(0.27 [0.11, 0.52]) & \textbf{0/15} \;(0.00 [0.00, 0.20]) \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{RedAgent vs PyRIT sur Gandalf (même oracle, même attaquant)}
+\label{tab:pyrit-g}
+\begin{tabularx}{\textwidth}{X c c}
+\toprule
+\textbf{Niveau} & \textbf{RedAgent} & \textbf{PyRIT} \\
+\midrule
+do-not-tell & 3/3 & 2/3 \\
+word-blacklist & 3/3 & 2/3 \\
+gandalf & 0/3 & 0/3 \\
+\textbf{Global} & \textbf{6/9} \;(0.67 [0.35, 0.88]) & \textbf{4/9} \;(0.44 [0.19, 0.73]) \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.95\textwidth]{fig_pyrit.png}
+  \caption{Mesure de PyRIT par le \emph{même} oracle (PromptMe). Le \emph{même} modèle attaquant (\texttt{gpt-4o-mini}) est utilisé des deux côtés~: seul l'orchestrateur diffère, de sorte que l'écart n'est imputable ni au LLM ni à la définition du succès.}
+  \label{fig:pyrit}
+\end{figure}
+
+À première vue, ces chiffres flattent RedAgent (4/15 contre 0/15~; 6/9 contre 4/9) et invitent à lire « RedAgent bat PyRIT ». \textbf{Cette lecture est fausse}, et mieux vaut le dire avant de l'écarter qu'après l'avoir laissée s'installer. Selon la règle de décision pré-enregistrée (différence déclarée seulement si les intervalles de Wilson ne se recouvrent pas), \textbf{aucune différence n'est déclarable} sur les deux bancs~: les intervalles se recouvrent. L'hypothèse de départ (« PyRIT $\geq$ RedAgent ») n'est donc \emph{pas} soutenue, la tendance étant même inverse — résultat rapporté tel quel, conformément à l'engagement.
+
+% >>> À RÉÉCRIRE TOI-MÊME (priorité MOYENNE) : ce contrôle anti-artefact est
+% une réflexe d'expérimentateur honnête ; raconte-le avec tes mots.
+\paragraph{Retour d'expérience --- écarter l'artefact.} Un score de 0/15 invite à la méfiance~: bug d'intégration ou résultat réel~? J'ai vérifié les 165 réponses collectées par PyRIT~: aucune n'était vide, aucune erreur de transport. Les cibles répondaient bien~; simplement, la persuasion conversationnelle de PyRIT ne déclenchait pas la fuite que ces endpoints \emph{single-shot} concèdent à une graine directe. Le 0/15 est donc un résultat, pas un défaut d'outillage.
+
+\paragraph{Interprétation et humilité.} L'inadéquation est de \emph{paradigme}~: l'orchestrateur multi-tours de PyRIT vise les jailbreaks conversationnels de chatbots, tandis que ces cibles sont des fuites \emph{single-shot} où un seul prompt générique direct gagne. À modèle attaquant identique, l'écart tient à l'orchestration et aux graines, non au LLM. On se garde donc de conclure « RedAgent $>$ PyRIT »~: un seul orchestrateur, un seul attaquant, une classe de tâches étroite qui avantage structurellement les graines de RedAgent. Le véritable acquis est ailleurs~: \textbf{la comparaison a été possible et équitable parce qu'un même oracle a mesuré les deux outils}. C'est la démonstration que l'instrument de mesure est indépendant de l'outil — la réponse de fond à la critique qui fragilisait la première version.

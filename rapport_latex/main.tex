@@ -1,0 +1,107 @@
+% =====================================================================
+% Rapport PFE -- RedAgent (version 2, recentree sur la methodologie)
+% Auteur     : SAWADOGO S Abdel
+% Formation  : Cycle Ingenieur, Specialite Ingenierie Informatique
+% Encadrant  : Pr DABOUNOU
+% Annee      : 2025 / 2026
+%
+% Compilation : pdfLaTeX (Overleaf), compiler 2 fois pour la table des matieres.
+% =====================================================================
+% !TEX root = main.tex
+\documentclass[12pt,a4paper,oneside]{report}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+\usepackage{lmodern}
+\usepackage[a4paper,margin=2.5cm]{geometry}
+\usepackage{setspace}
+\onehalfspacing
+
+\usepackage{graphicx}
+\graphicspath{{figures/}}
+\usepackage{float}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{longtable}
+\usepackage{multirow}
+\usepackage{makecell}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{enumitem}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage[font=small,labelfont=bf,labelsep=colon]{caption}
+\usepackage[colorlinks=true,linkcolor=black,urlcolor=blue,citecolor=blue]{hyperref}
+\usepackage{titlesec}
+\usepackage{fancyhdr}
+\usepackage{tabularx}
+
+% Numerotation romaine des chapitres (style PFE marocain).
+\renewcommand{\thechapter}{\Roman{chapter}}
+\titleformat{\chapter}[display]
+  {\normalfont\Huge\bfseries}{\chaptertitlename\ \thechapter\ :}{16pt}{\Huge}
+
+% Headers / footers
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\nouppercase{\leftmark}}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% Listings (code) -- style sobre.
+\definecolor{codebg}{RGB}{248,249,250}
+\definecolor{codekw}{RGB}{170,13,145}
+\definecolor{codestr}{RGB}{0,116,32}
+\definecolor{codecomment}{RGB}{106,115,125}
+\lstset{
+  basicstyle=\ttfamily\footnotesize,
+  backgroundcolor=\color{codebg},
+  keywordstyle=\color{codekw}\bfseries,
+  stringstyle=\color{codestr},
+  commentstyle=\color{codecomment}\itshape,
+  numbers=left,
+  numberstyle=\tiny\color{gray},
+  numbersep=8pt,
+  frame=single,
+  rulecolor=\color{lightgray!50},
+  breaklines=true,
+  showstringspaces=false,
+  tabsize=2,
+  captionpos=b,
+}
+\renewcommand{\lstlistingname}{Code}
+
+\begin{document}
+
+% =================== PAGE DE TITRE ===================
+\input{chapitres/titre}
+
+% =================== FRONT MATTER (chiffres romains) ===================
+\pagenumbering{roman}
+\setcounter{page}{1}
+
+\input{chapitres/dedicace}
+\input{chapitres/remerciements}
+\input{chapitres/resume}
+\input{chapitres/abstract}
+\input{chapitres/abreviations}
+
+\tableofcontents
+\listoftables
+\listoffigures
+
+% =================== CORPS (chiffres arabes) ===================
+\cleardoublepage
+\pagenumbering{arabic}
+\setcounter{page}{1}
+
+\input{chapitres/introduction}
+\input{chapitres/chap1_contexte}
+\input{chapitres/chap2_conception}
+\input{chapitres/chap3_technique}
+\input{chapitres/chap4_realisation}
+\input{chapitres/conclusion}
+\input{chapitres/webographie}
+
+\end{document}

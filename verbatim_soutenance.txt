@@ -1,0 +1,157 @@
+Verbatim soutenance :
+
+**Diapo 1 : 
+Bonjour et bienvenue chers membres du jury et chers auditoires.
+Je suis présent devant vous ce matin pour vous présenter mon projet de fin d'études - j'ai nommé RedAgent :
+Un outil léger de redteaming des applications LLMs et une méthodologie d'evaluation par oracle déterministe et juge LLM validé
+
+**Diapo 2: 
+Je vais commencer par vous présenter le contexte et la problématique ensuite l'outil et sa conception. Après quoi je présenterai le pivot du projet : de l'attaque à la mesure ainsi que l'élément central de ce pivot: le harnais d'évaluation.  et pour finir les limites et la conclusion.
+
+Diapo 3: Intercalaire.
+
+**Diapo 4: Les LLMs , larges langages de modèles sont passés des laboratoire de recherches à un usage plus concret à travers leur intégration dans dans les applications : chatbot , agent autonaume etc ... cette intégration ouvre une nouvelle surface d'attaque. La sécurité classique suppose une fontière entre la donnée utilisateur et le code . Ce qui n'est n'est plus le cas avec les applications LLMs où , le prompt system - l'instruction de confiance qui guide le LLMs , cohabite dans la même fenêtre de contexte que le prompt de l'utilisateur, qui peut potentiellement être hostile. c'est l source des vulnérabilités propres au LLMs
+
+**Diapo 5:
+L'évaluation de la sécurité des applications LLMs bute contre 3 obstacles : 
+- le non déterminisme : une même attaque peut réussir 1 fois sur 3 , il faut donc raisonner en taux et en interval de confiance
+- un espace d'attaque quasimment infini, les attaques sont en langage naturel, elles peuvent être reformulées, encodées ... d'oùla nécéssité d'automatisation.
+- enfin la question "est-ce une vulnérabilité" n'a pas toujours de réponse mécanique d'où la tentation d'utiliser un juge LLM (qui on le vera plus tard, se doit d'être validé avant)
+
+**Diapo 6: 
+Pour ce projet je me suis appuyé sur le référentiel de fait " L'OWASP top 10 for LLMs applications)" qui référence les 10 formes de vulnérabilités dont peut souffrir une application LLMs. 
+J'ai limité mon périmètre à 4 types de vulnérabilités qui sont :
+- LLM01: Injection de prompt ( c'est l'analogue des injections SQL mais pour les LLMs)
+- LLM02: Fuite d'information sensitive (comme le nom d'un précédent utilisateur ...)
+- LLM06: Agentivité excessive ( dont le but est l'escalade de privillège pour effectuer actions normalement hors du périmètre de l'utilisateur)
+- LLM07: La fuite de prompt système ( qui est la divulgation de la consigne interne et directrice du comportement du modèle LLMs)
+J'ai limité mon choix à ces quatres pour des besoins : 
+- le premier était que j'avais besoin d'un outils utilisable via API JSON , sans nécessité d'accès interne au niveau de l'application cible: or justement LLM03,LLM04,LLM05,LLM08 nécessite cet accès.
+- le second besoin était la validation de l'attaquant et du juge qui nécessitais de pouvoir mettre en place un oracle déterministe : ce qui n'est pas possible avec LLM09. 
+LLM10 (lui à été exclus pour la maitrise des coûts)
+
+**Diapo 7 : ok
+**Diapo 8 : ok
+**Diapo 9 : ok
+
+**Diapo 10 
+l'architecure se décompose comme suit : 
+-l'opérateur, c'est l'interface par laquelle on accède au moteur/la logique de RedAgent : il se subdivise en deux parties :
+	- l'application interactive/interface utilisateur c'est elle qui est présentée à un auditeur : réalisée simplement avec HTMX,Tailwind CSS, Jinja2 et flux SSE
+	- le harnais d'expérience accessible en CLI uniquement , il à été mis en place pour les besoins de la phase 2 consistant en l'évaluation de la force de l'attaque et la validation du juge et c'est la porte d'accès à l'oracle déterministe.
+-le moteur de RedAgent: c'est la que toute la logique de l'orchestration d'un audit se joue : Realisé en Python avec FastAPI , Uvicorn , LittLLM ,httpx , Pydantic et SQLite. Il communique avec la cible etxtérieur , le fournisseur LLM et la base de données intégrées SQLlite.
+
+Diapo 11 :
+pour le diagramme de classe
+
+nous avons l'orchestrateur qui est gère la logique de réalisation d'un audit , il fait appelle à AdapterConfig pour la configuration de la cible (URL,template JSON ...) et envoie les prompts via la méthode send_prompt , puis a AttackModule qui instancie l'attaque voulue via get_attack , et enfin à JudgeLLM qui donne le verdict pour une attaque. AttackModule est une classe abstraite qui définit ce qu'est un module d'attaque , pas comment l'attaque s'y prend , SeededAttack en hérite et implémente la stratégie commune : graines déterministes(via les modules) puis mutations LLM(via AttackerLLM). les quatres modules du périmètre sont représentés par LLM01_PromptInjection.... qui heritent de SeededAttack et ne font que définir les graines génériques ainsi que l'objectif d'attaque de chaque module.
+
+Nous avons par la suite le harnais intégrés en phase 2 , pour la gestion de la mesure . il fait appelle à l'orchestrateur dans le cadre de sa méthode exp1 qui mesure l'efficacité de l'attaque et exp2 qui consiste en la mesure de la fiabilité du juge , et à OracleSpec également intégrés pour les besoins de la phase 2 , dont l'objectif et declaré le succès de l'attaque (en exp1) via un critère déterministe et objectif. c'est cela qui permettra de comprer plus tard le juge à l'oracle. Nous y reviendrons plus en détail par la suite.
+
+### a) L'héritage : une famille de modules d'attaque
+- `AttackModule` est la classe **abstraite** (le contrat) : un `owasp_id` et une
+  méthode `run(ctx) → AttackResult`. Elle dit *ce qu'est* un module, pas *comment*
+  il s'y prend.
+- `SeededAttack` **hérite** de `AttackModule` et implémente *la* stratégie commune :
+  **graines déterministes, puis mutations LLM**. C'est là que vit toute la logique
+  réutilisable (la boucle seed → mutate).
+- Les **quatre** modules du périmètre — `LLM01_PromptInjection`,
+  `LLM02_SensitiveInfo`, `LLM06_ExcessiveAgency`, `LLM07_SystemPromptLeak` —
+  **héritent** de `SeededAttack` et ne font qu'apporter leurs **graines** et leur
+  **objectif** propres. Aucun ne réécrit la boucle.
+- Lecture jury : la généralisation `AttackModule ◁— SeededAttack ◁— LLMxx` garantit
+  que **toutes** les attaques partagent exactement le même moteur ; ajouter une
+  classe OWASP = écrire des graines, pas du flux. (Et le diagramme montre **4**
+  feuilles, pas 7 — le périmètre boîte-noire est lisible dans la structure.)
+
+### b) Les associations côté OUTIL (itération 1) : l'`Orchestrateur`
+L'`Orchestrateur` est le chef d'orchestre de l'audit interactif. Il **détient /
+appelle** (flèches `-->`) trois collaborateurs, et aucun de plus :
+1. `Orchestrateur --> AdapterConfig` : il configure la **cible** (url, gabarit,
+   `encoding`, `response_path`) et envoie les prompts via `send_prompt`.
+2. `Orchestrateur --> AttackModule` : il instancie le module voulu (`get_attack`)
+   et lui passe la main (`module.run(ctx)`).
+3. `Orchestrateur --> JudgeLLM : verdict` : c'est le **juge** qui tranche le succès
+   *dans l'outil*. **L'`Orchestrateur` ne connaît PAS `OracleSpec`** — il n'y a
+   aucune flèche entre eux (vérifiable : `orchestrator.py` n'importe jamais l'oracle).
+- À part : `SeededAttack --> AttackerLLM : mutations` — le module délègue la
+  **génération** des prompts mutés à l'`AttackerLLM` (qui parle au fournisseur LLM).
+
+### c) Les associations côté HARNAIS (itération 2) : `Harnais`
+Le `Harnais` (les scripts `runner` / `replay` / `metrics`) est le **second point
+d'entrée**, celui de la mesure. Ses flèches racontent les deux expériences :
+1. `Harnais --> Orchestrateur` *(réutilise les mêmes briques)* : l'Exp. 1 rejoue la
+   **même** boucle d'attaque que l'outil — c'est la garantie que « ce qu'on mesure
+   = ce que l'outil exécute ».
+2. `Harnais --> OracleSpec : succès objectif` : mais le succès de l'Exp. 1 est
+   tranché par l'**ORACLE**, pas par le juge. C'est l'unique flèche qui touche
+   `OracleSpec`, et elle part du **harnais seul**.
+3. `Harnais --> JudgeLLM` : en Exp. 2, le harnais convoque le(s) **juge(s)** sur les
+   tuples loggés pour les comparer à l'oracle puis au gold humain.
+
+### d) Le découplage, lu sur les flèches
+Le point central de la contribution est **visible dans le graphe** :
+`OracleSpec` et `JudgeLLM` reçoivent tous deux le **même** `(prompt, réponse)`,
+mais **aucune flèche ne les relie** l'un à l'autre, et **deux émetteurs distincts**
+les actionnent (le juge par l'`Orchestrateur` *et* le `Harnais` ; l'oracle par le
+`Harnais` *seul*). C'est exactement la note centrale du diagramme — à ne pas retirer.
+
+```
+            AttackModule (abstrait)
+                  ▲ hérite
+            SeededAttack ───── mutations ──► AttackerLLM ──► fournisseur LLM
+            ▲   ▲   ▲   ▲
+      LLM01 LLM02 LLM06 LLM07            (4 feuilles = périmètre boîte-noire)
+
+   Orchestrateur ──► AdapterConfig ──► Cible (boîte noire)
+        │   └──────► AttackModule
+        └──────────► JudgeLLM : verdict        ◄─┐ (itération 1 : l'outil)
+                                                 │
+   Harnais ──► Orchestrateur                     │  même (prompt, réponse)…
+        ├────► OracleSpec : succès objectif  ◄───┤  …évalué par DEUX juges
+        └────► JudgeLLM                          │  qui NE se référencent PAS
+                                                 ◄─┘ (itération 2 : la mesure)
+```
+
+**À retenir (une phrase)** : l'héritage factorise *comment on attaque* (une seule
+boucle pour quatre classes), et les associations factorisent *comment on décide* —
+le juge pour l'outil, l'oracle pour la mesure, jamais l'un via l'autre. La
+factorisation Exp. 1 / Exp. 2 n'est donc pas qu'un protocole : c'est une propriété
+**structurelle** du code, lisible sur le diagramme.
+
+**Diapo 12-19 : ok
+
+
+Diapo 20 : 
+
+la version initiale du projet comportait deux failles : la validation circulaire : J'avais construit l'outil pour attaquer des cibles que j'avais moi volontairement rendu vulnérable et j'avais adapté l'outil à ces cibles. L'outil réussissait sur des cibles taillés pour lui. 
+la deuxième faille c'est la non validation du juge LLM , le jugement était rendu par un modèle dont je n'avais pas vérifié la fiabilité.
+
+Diapo 21 : 
+
+c'est de ces constats que j'ai choisi de ne plus simplement attaquer , mais aussi de mesurer le succès de manière plus juste et honnête.
+
+Diapo 22 : 
+
+Pour ce faire un oracle déterministe à été mis en place qui permet de juger le succès d'un attaque et de le comparer au verdict du juge
+
+diapo 23 : ok
+
+Diapo 24 : 
+ 
+nous allons maintenant voir comment se déroule les expériences 1 et 2 dont j'ai précédemment parlé.
+Le prompt attaquant (d'abord graines , puis mutations) est envoyé vers la cible, la réponse de la cible couplé au prompt au est envoyé vers l'oracle qui labelise l'attaque. Par la suite le couple prompt réponse est passé par un panel de juges dont les verdict seront stockés et permettront la comparaison, juge vs oracle. ces même couple de prompts et de réponse sont convertis en fichier excel pour un verdict humain (le label de l'oracle bien sur n'est pas visible) a l'issu de quoi on obtient une comparaison finale juge vs oracle vs verdict humain qui permettra le calcul des métriques.
+
+diapo 25 : 
+à présent voyons la logique de l'oracle. 
+il reçoit la réponse de la cible et procède àla detection de flag ou secret par une recherche regex (encodés via un fichier JSON).
+
+Diapo 26 : validation de l'oracle 
+
+Diapo 27 :  ici nous avons l'expérience 1 qui consiste à determiner l'efficacité de l'attaquant. Comme on peut le voir les taux de captures sont faibles pour les 6 modèles et les intervals de confinace se recoupent. Aucun palmarès. Le résultat ici intéressant c'est le taux de refus. Certains modèles LLMs même avec un prompt system bien affiné refuse de générer des attaques adversariaux.
+
+Diapo 28 : pour l'expérience 2 : la validation du juge LLM on constate que 4 modèles sur 5 font de bons juges ( ils sont en concordances avec l'oracle et avec la vérité-terrain humaine avec un coefficient de kappa proche de 1. le seul modèle qui est un mauvais juge c'est le modèle safety,gpt-oss , avec 12 false positive. ce qui est un résultat intéressant car c'est un modèle qui a été mis en place pour justement bloquer les prompts hostiles.
+
+diapo 29-31 : ok 
+diapo 32 : cette diapositive montre les résulats de PyRIT de Microsoft , face à promptme , les chiffres sont flatteurs pour RedAgent 
+diapo 33 : ici c'est PyRIT face à gandalf. Encore une fois les chiffres sont avanteux pour Redagent. Mais il faudrait bien placer le contexte. PyRIT est un outil d'expert avec plusieurs configurations possible. Pour avoir une comparaison équitable avec RedAgent j'ai limité le perimètre de PyRIT pour utiliser exactement les mêmes outils que RedAgent  ( Pyrit dipose de plusieurs classes d'attack , moi j'ai utilise RedTeaming qui est celle qui se rapproche le plus de ce que fait PyRIT) c'est résultat ne disent donc pas que RedAgent est supérieur à PyRIT. 

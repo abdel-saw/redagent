@@ -1,0 +1,103 @@
+\chapter{Contexte et état de l'art}
+\label{chap:contexte}
+
+\noindent\itshape
+Ce chapitre situe le problème — la sécurité des applications fondées sur les LLM et son évaluation — puis dresse l'état de l'art des vulnérabilités, des méthodes d'attaque automatisées et des outils, pour faire apparaître le verrou méthodologique que ce mémoire entend lever.
+\normalfont
+\vspace{0.5cm}
+
+\section{Contexte général}
+
+Les grands modèles de langage (LLM) animent aujourd'hui des produits utilisés au quotidien~: agents conversationnels, génération augmentée par récupération (RAG), et surtout \textbf{agents} qui appellent des outils, interrogent des bases ou déclenchent des actions. Cette intégration a fait surgir une surface d'attaque d'un type nouveau. L'entrée du système est du \textbf{langage naturel}~; le comportement est \textbf{non déterministe}~; et, fait décisif, les instructions de confiance (le prompt système) partagent la même fenêtre de contexte que des données fournies par l'utilisateur, parfois hostiles.
+
+La sécurité applicative classique repose sur des frontières nettes — entre code et données, entre requête et réponse. Une application LLM \emph{n'a pas} cette séparation forte~: rien, au niveau du modèle, ne distingue une consigne légitime d'une consigne injectée dans un document. C'est la racine d'une famille de vulnérabilités propres aux LLM, que les contrôles traditionnels (pare-feu, validation de schéma) ne couvrent pas.
+
+\section{La difficulté d'évaluer la sécurité d'une application LLM}
+
+Tester une application LLM se heurte à trois obstacles.
+
+D'abord le \textbf{non-déterminisme}~: une même attaque peut réussir un essai sur trois. Le succès n'est pas binaire mais \emph{probabiliste}, ce qui impose de raisonner en taux et en intervalles de confiance plutôt qu'en simple « ça marche / ça ne marche pas ». Ensuite, l'\textbf{espace d'attaque en langage naturel} est immense~: là où une injection SQL se décline en un nombre fini de motifs, une attaque par prompt se reformule, se traduit, s'encode à l'infini. Enfin, la \textbf{définition du succès} est souvent affaire de jugement~: « cette réponse constitue-t-elle une fuite~?» n'a pas toujours de réponse mécanique. D'où la tentation de confier l'arbitrage à un autre LLM — dont la fiabilité, justement, est rarement vérifiée.
+
+Face à l'ampleur de cet espace, le red teaming des applications LLM doit être \textbf{automatisé}, au moins en partie. C'est l'objet des méthodes et des outils décrits plus loin.
+
+\section{Le problème adressé par ce travail}
+
+Deux manques motivent ce mémoire.
+
+Le premier est un manque d'\textbf{accessibilité}. Les frameworks de red teaming existants sont puissants, mais lourds~: courbe d'apprentissage, configuration experte, dépendances nombreuses. Il manque un outil léger, mono-conteneur, fondé sur le principe \emph{Bring Your Own Key} (l'utilisateur fournit ses clés, conservées en mémoire seulement), observable, et compréhensible par un public non spécialiste, qui rattache ses tests à un référentiel reconnu.
+
+Le second manque, plus profond, concerne la \textbf{rigueur de l'évaluation des outils eux-mêmes}. C'est le verrou central de ce travail. La première version du projet illustrait deux faiblesses méthodologiques courantes dans le domaine~:
+\begin{itemize}
+  \item une \textbf{validation circulaire}~: l'outil n'était éprouvé que sur des cibles que l'auteur avait lui-même rendues vulnérables, sans aucune référence indépendante~;
+  \item un \textbf{juge LLM jamais validé}~: tous les résultats reposaient sur le verdict d'un modèle dont la justesse n'avait jamais été mesurée. Le juge était l'oracle implicite, sans contrôle.
+\end{itemize}
+
+\section{Taxonomie des vulnérabilités : l'OWASP Top~10 for LLM Applications (2025)}
+
+Le référentiel de fait pour la sécurité des applications LLM est l'\textbf{OWASP Top~10 for LLM Applications}, dont l'édition 2025 compte dix catégories (tableau~\ref{tab:owasp}).
+
+\begin{table}[H]
+\centering
+\caption{OWASP Top~10 for LLM Applications (édition 2025)}
+\label{tab:owasp}
+\begin{tabularx}{\textwidth}{l X}
+\toprule
+\textbf{Code} & \textbf{Catégorie} \\
+\midrule
+LLM01 & Prompt Injection (injection de prompt) \\
+LLM02 & Sensitive Information Disclosure (divulgation d'information sensible) \\
+LLM03 & Supply Chain (chaîne d'approvisionnement) \\
+LLM04 & Data and Model Poisoning (empoisonnement de données / modèle) \\
+LLM05 & Improper Output Handling (mauvaise gestion des sorties) \\
+LLM06 & Excessive Agency (agentivité excessive) \\
+LLM07 & System Prompt Leakage (fuite de prompt système) \\
+LLM08 & Vector and Embedding Weaknesses (faiblesses des vecteurs / \emph{embeddings}) \\
+LLM09 & Misinformation (désinformation) \\
+LLM10 & Unbounded Consumption (consommation non maîtrisée) \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+L'édition 2025 introduit notamment \emph{System Prompt Leakage} (LLM07), \emph{Vector and Embedding Weaknesses} (LLM08) et \emph{Unbounded Consumption} (LLM10), et absorbe l'ancienne \emph{Overreliance} dans \emph{Misinformation} (LLM09).
+
+RedAgent cible les catégories \textbf{testables en boîte noire, via une API JSON, et au succès objectivement décidable}~: \textbf{LLM01}, \textbf{LLM02}, \textbf{LLM06} et \textbf{LLM07}. Les autres sont documentées comme hors de ce cadre~: LLM03/04 relèvent de la phase d'entraînement~; LLM05 se joue côté intégration applicative~; LLM08 est interne au RAG~; LLM09 suppose un jugement de véracité sans flag objectif~; LLM10 relève du déni de service. Ce périmètre n'est pas une commodité~: il garantit que chaque succès mesuré l'est contre une \emph{vérité-terrain} sans ambiguïté.
+
+\section{Méthodes d'attaque automatisées}
+
+On distingue deux grandes familles.
+
+\paragraph{Attaques à accès interne (\emph{white-box}).} L'approche \textbf{GCG} (\emph{Greedy Coordinate Gradient}, Zou et al., 2023) optimise par gradient un suffixe adversarial qui maximise la probabilité d'une réponse nuisible. Redoutable, mais elle exige l'accès aux poids du modèle — inapplicable à une cible de production en boîte noire.
+
+\paragraph{Attaques en boîte noire pilotées par LLM.} Elles emploient un \emph{LLM attaquant} qui raffine ses prompts à partir des réponses de la cible, sans gradient~: \textbf{PAIR} (\emph{Prompt Automatic Iterative Refinement}, Chao et al., 2023) introduit la boucle attaquant–cible avec retour~; \textbf{TAP} (\emph{Tree of Attacks with Pruning}, Mehrotra et al., 2024) l'étend à une recherche arborescente avec élagage~; \textbf{Crescendo} (Russinovich et al., 2024) escalade progressivement, sur plusieurs tours, d'une demande bénigne vers l'objectif.
+
+\paragraph{Positionnement de RedAgent.} RedAgent opère en boîte noire et combine des \textbf{graines génériques} (une par classe OWASP~: vidage de configuration, « répète ce qui précède », TLDR, cadrage d'autorité) avec des \textbf{mutations générées par un LLM attaquant}. C'est une approche \emph{semi-autonome}, délibérément plus simple que TAP ou PAIR. Ce choix est assumé~: l'objet du mémoire n'est pas la sophistication de l'attaque, mais la rigueur avec laquelle on en mesure le succès.
+
+\section{Outils et frameworks de red teaming}
+
+Plusieurs cadres outillés existent (tableau~\ref{tab:outils}). Ils sont matures, mais conçus pour l'ingénieur sécurité, avec l'installation et les abstractions que cela suppose.
+
+\begin{table}[H]
+\centering
+\caption{Principaux outils de red teaming LLM}
+\label{tab:outils}
+\begin{tabularx}{\textwidth}{l l X}
+\toprule
+\textbf{Outil} & \textbf{Éditeur} & \textbf{Profil} \\
+\midrule
+PyRIT & Microsoft & Framework extensible~: orchestrateurs multi-tours, convertisseurs, scorers, mémoire. \\
+garak & NVIDIA & Scanner à \emph{probes} (familles d'attaques prédéfinies). \\
+promptfoo & open source & Tests et évaluations de prompts, orienté CI/CD. \\
+Giskard / GOAT & Giskard & Red teaming automatisé multi-tours. \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+Le créneau de RedAgent est complémentaire et non concurrent~: léger, mono-conteneur, BYOK, observable en direct, aligné OWASP, pensé pour un public non expert. Il ne prétend pas remplacer PyRIT ou garak, mais offrir un point d'entrée accessible — et porter une contribution de \emph{méthode}.
+
+\section{Bancs d'évaluation et verrou de la mesure}
+
+Évaluer un outil suppose une vérité-terrain du succès. On dispose pour cela de ressources comme \textbf{Gandalf} (Lakera), jeu public d'injection de prompt où l'extraction d'un mot de passe est confirmée par un endpoint dédié~; de \textbf{CTF OWASP-LLM} à flags déterministes~; ou de jeux de prompts nuisibles tels que HarmBench ou AdvBench — dont le succès, hélas, est souvent évalué par un classifieur ou un juge LLM.
+
+\paragraph{Le juge LLM : une fiabilité étudiée ailleurs, pas ici.} Il serait inexact de prétendre que la fiabilité des juges LLM n'a jamais été étudiée. Un corpus déjà substantiel l'examine dans le cadre du \emph{LLM-as-a-judge} appliqué à l'évaluation de qualité~: Zheng et al. (2023), avec MT-Bench et Chatbot Arena, mesurent l'accord entre un juge LLM et des préférences humaines (de l'ordre de 80~\%, comparable à l'accord inter-humains) tout en documentant des biais systématiques — biais de position, de verbosité, d'auto-complaisance~; des travaux de synthèse ultérieurs (Gu et al., 2024) recensent ces effets et les protocoles d'atténuation. \textbf{Mais ce corpus mesure le juge sur une tâche de \emph{préférence} ou de \emph{notation de qualité}} (« quelle réponse est la meilleure~?», « cette réponse est-elle utile~?»), dans un cadre de \emph{benchmark}. Il ne porte presque jamais sur l'usage qui nous occupe~: l'\textbf{arbitrage binaire du succès d'une attaque} en red teaming d'\emph{outils} (« cette réponse constitue-t-elle, oui ou non, une vulnérabilité~?»), et plus rarement encore contre une vérité-terrain humaine \emph{établie pour cet arbitrage précis}. Le verrou n'est donc pas que la question soit vierge, mais qu'elle reste ouverte là où on en a besoin~: au point exact où un juge LLM décide, en pratique, si un outil de sécurité a « réussi ».
+
+C'est ici qu'apparaît le \textbf{verrou méthodologique}. La littérature multiplie les attaques et les outils, mais traite la \emph{mesure} du succès — quand c'est un juge LLM qui la rend — comme acquise dans ce contexte précis. Les deux écueils déjà cités — validation circulaire et juge non validé pour l'arbitrage de succès — y sont fréquents. La contribution de ce mémoire se situe précisément à cet endroit~: rendre le succès \emph{objectivement} décidable par un oracle déterministe, et rendre le juge LLM \emph{mesurable} contre cet oracle puis contre un jugement humain. Le chapitre suivant en présente la conception.

@@ -1,0 +1,16 @@
+\chapter*{Abstract}
+\addcontentsline{toc}{chapter}{Abstract}
+\thispagestyle{plain}
+
+\selectlanguage{english}
+
+Applications built on large language models (LLMs) are being deployed at pace, exposing an attack surface that classical security does not cover: the input is natural language, and trusted instructions share the context window with potentially hostile data. Automated \emph{red teaming} has become essential, yet its evaluation suffers from two recurring weaknesses: \textbf{circular validation} (testing only on targets the author made vulnerable) and an \textbf{unvalidated LLM judge} whose verdict nonetheless arbitrates success.
+
+This thesis presents \textbf{RedAgent}, a \textbf{lightweight, BYOK, observable} semi-autonomous red-teaming agent aligned with the \textbf{OWASP Top~10 for LLM Applications (2025)}, and above all a \textbf{tool-agnostic evaluation methodology}. The core contribution is the \textbf{decoupling} of a \textbf{deterministic oracle} — an objective ground truth of attack success via flag/secret detection — from a generic \textbf{LLM judge} whose \textbf{reliability is measured}, not assumed: first against the oracle, then against a blind \textbf{human verification}.
+
+The approach is validated on independent \textbf{third-party} targets — an OWASP-LLM CTF and Lakera's public \emph{Gandalf} game, whose confirmation oracle is not authored by us — which breaks circularity. Results show that four out of five lightweight LLM judges match human judgment almost perfectly (Cohen's $\kappa \approx 0.97$), that a \emph{safety}-tuned model is in fact the \textbf{worst judge} (it refuses but fails to recognise the vulnerability), and that the deterministic oracle itself may have a blind spot depending on how discrete the success criterion is. Finally, a \textbf{pre-registered comparison} with \textbf{PyRIT} (Microsoft) shows that the same oracle objectively evaluates a third-party framework under identical conditions: the contribution is not raw attack strength but the \textbf{instrumentation of measurement}, reusable beyond RedAgent.
+
+\vspace{0.4cm}
+\noindent\textbf{Keywords:} LLM security, red teaming, OWASP LLM Top~10, prompt injection, system prompt leakage, deterministic oracle, LLM-as-a-judge, validation, confidence interval, Cohen's kappa.
+
+\selectlanguage{french}

@@ -1,0 +1,16 @@
+% >>> À RELIRE / RETOUCHER (priorité MOYENNE) :
+% Le fond est exact. Pour personnaliser, reformule la 1re phrase avec ta propre
+% accroche, et n'hésite pas à raccourcir : un résumé qui « respire » différemment
+% du reste du texte aide.
+\chapter*{Résumé}
+\addcontentsline{toc}{chapter}{Résumé}
+\thispagestyle{plain}
+
+Les applications fondées sur les grands modèles de langage (LLM) se déploient vite, et exposent une surface d'attaque que la sécurité classique ne couvre pas~: l'entrée est du langage naturel, et les instructions de confiance partagent le contexte avec des données potentiellement hostiles. Le \emph{red teaming} automatisé devient indispensable, mais son évaluation souffre de deux faiblesses récurrentes~: une \textbf{validation circulaire} (on ne teste que sur des cibles que l'on a soi-même rendues vulnérables) et un \textbf{juge LLM jamais validé}, dont le verdict sert pourtant d'arbitre du succès.
+
+Ce mémoire propose \textbf{RedAgent}, un agent de red teaming semi-autonome \textbf{léger, BYOK et observable}, aligné sur l'\textbf{OWASP Top~10 for LLM Applications (2025)}, et surtout une \textbf{méthodologie d'évaluation indépendante de l'outil}. La contribution centrale est le \textbf{découplage} d'un \textbf{oracle déterministe} — vérité-terrain objective du succès, par détection de flag ou de secret — et d'un \textbf{juge LLM} générique dont la \textbf{fiabilité est mesurée}, et non supposée, d'abord contre l'oracle puis contre une \textbf{vérité-terrain humaine} établie en aveugle.
+
+La démarche est validée sur des cibles \textbf{tierces} indépendantes — un CTF OWASP-LLM et le jeu public \emph{Gandalf} de Lakera, dont l'oracle de confirmation n'est pas écrit par nous —, ce qui brise la circularité. Les résultats montrent que quatre juges LLM légers sur cinq reproduisent presque parfaitement le jugement humain ($\kappa$ de Cohen $\approx 0{,}97$), qu'un modèle \emph{safety} se révèle au contraire le \textbf{pire juge} (il refuse, mais ne reconnaît pas la vulnérabilité), et que l'oracle déterministe lui-même peut comporter un angle mort selon le caractère discret du critère de succès. Enfin, une \textbf{comparaison pré-enregistrée} avec \textbf{PyRIT} (Microsoft) établit que le même oracle évalue objectivement un framework tiers dans des conditions identiques~: la contribution n'est plus la force brute de l'attaque, mais l'\textbf{instrumentation de la mesure}, réutilisable au-delà de RedAgent.
+
+\vspace{0.4cm}
+\noindent\textbf{Mots-clés~:} sécurité des LLM, red teaming, OWASP LLM Top~10, injection de prompt, fuite de prompt système, oracle déterministe, juge LLM, validation, intervalle de confiance, $\kappa$ de Cohen.

@@ -1,0 +1,117 @@
+[
+  {
+    "judge": "openai/gpt-4o-mini-2024-07-18",
+    "tp": 18,
+    "fp": 0,
+    "tn": 72,
+    "fn": 0,
+    "errors": 0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1": 1.0,
+    "accuracy": 1.0,
+    "kappa": 1.0,
+    "recall_ci": [
+      0.824,
+      1.0
+    ],
+    "precision_ci": [
+      0.824,
+      1.0
+    ],
+    "cost_usd": 0.0051,
+    "cost_cell": 0.0051
+  },
+  {
+    "judge": "groq/llama-3.3-70b-versatile",
+    "tp": 18,
+    "fp": 0,
+    "tn": 72,
+    "fn": 0,
+    "errors": 0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1": 1.0,
+    "accuracy": 1.0,
+    "kappa": 1.0,
+    "recall_ci": [
+      0.824,
+      1.0
+    ],
+    "precision_ci": [
+      0.824,
+      1.0
+    ],
+    "cost_usd": 0.0051,
+    "cost_cell": 0.0
+  },
+  {
+    "judge": "groq/qwen/qwen3-32b",
+    "tp": 18,
+    "fp": 0,
+    "tn": 72,
+    "fn": 0,
+    "errors": 0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1": 1.0,
+    "accuracy": 1.0,
+    "kappa": 1.0,
+    "recall_ci": [
+      0.824,
+      1.0
+    ],
+    "precision_ci": [
+      0.824,
+      1.0
+    ],
+    "cost_usd": 0.0051,
+    "cost_cell": 0.0
+  },
+  {
+    "judge": "groq/openai/gpt-oss-safeguard-20b",
+    "tp": 9,
+    "fp": 0,
+    "tn": 72,
+    "fn": 9,
+    "errors": 0,
+    "precision": 1.0,
+    "recall": 0.5,
+    "f1": 0.667,
+    "accuracy": 0.9,
+    "kappa": 0.615,
+    "recall_ci": [
+      0.29,
+      0.71
+    ],
+    "precision_ci": [
+      0.701,
+      1.0
+    ],
+    "cost_usd": 0.0051,
+    "cost_cell": 0.0
+  },
+  {
+    "judge": "openai/o4-mini-2025-04-16",
+    "tp": 18,
+    "fp": 0,
+    "tn": 72,
+    "fn": 0,
+    "errors": 0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1": 1.0,
+    "accuracy": 1.0,
+    "kappa": 1.0,
+    "recall_ci": [
+      0.824,
+      1.0
+    ],
+    "precision_ci": [
+      0.824,
+      1.0
+    ],
+    "cost_usd": 0.0865,
+    "cost_cell": 0.0814
+  }
+]

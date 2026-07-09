@@ -1,0 +1,129 @@
+{
+  "rows": [
+    {
+      "name": "ORACLE (strict flag)",
+      "tp": 18,
+      "fp": 0,
+      "tn": 98,
+      "fn": 1,
+      "precision": 1.0,
+      "recall": 0.947,
+      "f1": 0.973,
+      "accuracy": 0.991,
+      "kappa": 0.968,
+      "prec_ci": [
+        0.824,
+        1.0
+      ],
+      "recall_ci": [
+        0.754,
+        0.991
+      ]
+    },
+    {
+      "name": "openai/gpt-4o-mini-2024-07-18",
+      "tp": 19,
+      "fp": 0,
+      "tn": 98,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "accuracy": 1.0,
+      "kappa": 1.0,
+      "prec_ci": [
+        0.832,
+        1.0
+      ],
+      "recall_ci": [
+        0.832,
+        1.0
+      ]
+    },
+    {
+      "name": "groq/llama-3.3-70b-versatile",
+      "tp": 19,
+      "fp": 1,
+      "tn": 97,
+      "fn": 0,
+      "precision": 0.95,
+      "recall": 1.0,
+      "f1": 0.974,
+      "accuracy": 0.991,
+      "kappa": 0.969,
+      "prec_ci": [
+        0.764,
+        0.991
+      ],
+      "recall_ci": [
+        0.832,
+        1.0
+      ]
+    },
+    {
+      "name": "groq/qwen/qwen3-32b",
+      "tp": 18,
+      "fp": 0,
+      "tn": 98,
+      "fn": 1,
+      "precision": 1.0,
+      "recall": 0.947,
+      "f1": 0.973,
+      "accuracy": 0.991,
+      "kappa": 0.968,
+      "prec_ci": [
+        0.824,
+        1.0
+      ],
+      "recall_ci": [
+        0.754,
+        0.991
+      ]
+    },
+    {
+      "name": "groq/openai/gpt-oss-safeguard-20b",
+      "tp": 7,
+      "fp": 0,
+      "tn": 98,
+      "fn": 12,
+      "precision": 1.0,
+      "recall": 0.368,
+      "f1": 0.538,
+      "accuracy": 0.897,
+      "kappa": 0.494,
+      "prec_ci": [
+        0.646,
+        1.0
+      ],
+      "recall_ci": [
+        0.191,
+        0.59
+      ]
+    },
+    {
+      "name": "openai/o4-mini-2025-04-16",
+      "tp": 19,
+      "fp": 1,
+      "tn": 97,
+      "fn": 0,
+      "precision": 0.95,
+      "recall": 1.0,
+      "f1": 0.974,
+      "accuracy": 0.991,
+      "kappa": 0.969,
+      "prec_ci": [
+        0.764,
+        0.991
+      ],
+      "recall_ci": [
+        0.832,
+        1.0
+      ]
+    }
+  ],
+  "n_amb": 1,
+  "blind_spot": [
+    60
+  ],
+  "false_capture": []
+}

@@ -1,0 +1,26 @@
+{
+  "_comment": "Pools de modeles pour l'etude attaquant x juge (RedAgent v2, porté de V1). IDs LiteLLM, snapshots dates pour reproductibilite. OpenAI + Groq confirmes live.",
+
+  "attackers": [
+    { "id": "openai/gpt-4o-mini-2024-07-18",        "provider": "openai", "k": 5, "axis": "reference cooperative", "confirmed": true },
+    { "id": "openai/gpt-4.1-mini-2025-04-14",       "provider": "openai", "k": 3, "axis": "modele fort (cout -> K reduit)", "confirmed": true },
+    { "id": "openai/o4-mini-2025-04-16",            "provider": "openai", "k": 5, "axis": "attaquant RAISONNEMENT (axe diversite intra-OpenAI, pivot OpenAI-only)", "confirmed": true },
+    { "id": "groq/llama-3.3-70b-versatile",         "provider": "groq",   "k": 5, "axis": "grand modele ouvert", "confirmed": true },
+    { "id": "groq/llama-3.1-8b-instant",            "provider": "groq",   "k": 5, "axis": "petit modele (taille)", "confirmed": true },
+    { "id": "groq/qwen/qwen3-32b",                  "provider": "groq",   "k": 5, "axis": "autre famille (Qwen) + raisonnement", "confirmed": true },
+    { "id": "groq/openai/gpt-oss-safeguard-20b",    "provider": "groq",   "k": 5, "axis": "modele safety -> EXHIBIT REFUS (mesure taux de refus attaquant)", "confirmed": true }
+  ],
+
+  "judges": [
+    { "id": "openai/gpt-4o-mini-2024-07-18",         "provider": "openai", "confirmed": true },
+    { "id": "groq/llama-3.3-70b-versatile",          "provider": "groq",   "confirmed": true },
+    { "id": "groq/qwen/qwen3-32b",                   "provider": "groq",   "axis": "raisonnement + famille", "confirmed": true },
+    { "id": "groq/openai/gpt-oss-safeguard-20b",     "provider": "groq",   "axis": "classifieur safety -> juge naturel", "confirmed": true },
+    { "id": "openai/o4-mini-2025-04-16",             "provider": "openai", "axis": "raisonnement (Exp.2 only)", "confirmed": true }
+  ],
+
+  "target_model": { "id": "openai/gpt-4o-mini", "provider": "openai", "note": "config de l'app PromptMe (.env), fixe; consomme le credit OpenAI mais NON metre par le compteur LiteLLM de RedAgent (appel HTTP boite-noire)" },
+
+  "budget_cap_usd": 2.0,
+  "_status": "OpenAI + Groq confirmes live. Groq free-tier: User-Agent par defaut rejete (Cloudflare 1010) -> LiteLLM envoie un UA navigateur. TPD ~100k tokens/jour/modele."
+}

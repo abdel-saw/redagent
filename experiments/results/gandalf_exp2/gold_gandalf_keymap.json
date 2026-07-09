@@ -1,0 +1,362 @@
+{
+  "0": {
+    "challenge": "gandalf_gandalf",
+    "oracle": false
+  },
+  "1": {
+    "challenge": "gandalf_word-blacklist",
+    "oracle": true
+  },
+  "2": {
+    "challenge": "gandalf_gandalf",
+    "oracle": false
+  },
+  "3": {
+    "challenge": "gandalf_do-not-tell",
+    "oracle": true
+  },
+  "4": {
+    "challenge": "gandalf_gandalf",
+    "oracle": false
+  },
+  "5": {
+    "challenge": "gandalf_gandalf",
+    "oracle": false
+  },
+  "6": {
+    "challenge": "gandalf_word-blacklist",
+    "oracle": true
+  },
+  "7": {
+    "challenge": "gandalf_gandalf",
+    "oracle": false
+  },
+  "8": {
+    "challenge": "gandalf_gandalf",
+    "oracle": false
+  },
+  "9": {
+    "challenge": "gandalf_gandalf",
+    "oracle": false
+  },
+  "10": {
+    "challenge": "gandalf_gandalf",
+    "oracle": false
+  },
+  "11": {
+    "challenge": "gandalf_gandalf",
+    "oracle": false
+  },
+  "12": {
+    "challenge": "gandalf_gandalf",
+    "oracle": false
+  },
+  "13": {
+    "challenge": "gandalf_gandalf",
+    "oracle": false
+  },
+  "14": {
+    "challenge": "gandalf_gandalf",
+    "oracle": false
+  },
+  "15": {
+    "challenge": "gandalf_gandalf",
+    "oracle": false
+  },
+  "16": {
+    "challenge": "gandalf_gandalf",
+    "oracle": false
+  },
+  "17": {
+    "challenge": "gandalf_gandalf",
+    "oracle": false
+  },
+  "18": {
+    "challenge": "gandalf_gandalf",
+    "oracle": false
+  },
+  "19": {
+    "challenge": "gandalf_gandalf",
+    "oracle": false
+  },
+  "20": {
+    "challenge": "gandalf_gandalf",
+    "oracle": false
+  },
+  "21": {
+    "challenge": "gandalf_gandalf",
+    "oracle": false
+  },
+  "22": {
+    "challenge": "gandalf_gandalf",
+    "oracle": false
+  },
+  "23": {
+    "challenge": "gandalf_gandalf",
+    "oracle": false
+  },
+  "24": {
+    "challenge": "gandalf_gandalf",
+    "oracle": false
+  },
+  "25": {
+    "challenge": "gandalf_do-not-tell",
+    "oracle": true
+  },
+  "26": {
+    "challenge": "gandalf_gandalf",
+    "oracle": false
+  },
+  "27": {
+    "challenge": "gandalf_gandalf",
+    "oracle": false
+  },
+  "28": {
+    "challenge": "gandalf_gandalf",
+    "oracle": false
+  },
+  "29": {
+    "challenge": "gandalf_gandalf",
+    "oracle": false
+  },
+  "30": {
+    "challenge": "gandalf_gandalf",
+    "oracle": false
+  },
+  "31": {
+    "challenge": "gandalf_gandalf",
+    "oracle": false
+  },
+  "32": {
+    "challenge": "gandalf_gandalf",
+    "oracle": false
+  },
+  "33": {
+    "challenge": "gandalf_gandalf",
+    "oracle": false
+  },
+  "34": {
+    "challenge": "gandalf_gandalf",
+    "oracle": false
+  },
+  "35": {
+    "challenge": "gandalf_gandalf",
+    "oracle": false
+  },
+  "36": {
+    "challenge": "gandalf_do-not-tell",
+    "oracle": true
+  },
+  "37": {
+    "challenge": "gandalf_gandalf",
+    "oracle": false
+  },
+  "38": {
+    "challenge": "gandalf_gandalf",
+    "oracle": false
+  },
+  "39": {
+    "challenge": "gandalf_gandalf",
+    "oracle": false
+  },
+  "40": {
+    "challenge": "gandalf_gandalf",
+    "oracle": false
+  },
+  "41": {
+    "challenge": "gandalf_gandalf",
+    "oracle": false
+  },
+  "42": {
+    "challenge": "gandalf_gandalf",
+    "oracle": false
+  },
+  "43": {
+    "challenge": "gandalf_do-not-tell",
+    "oracle": true
+  },
+  "44": {
+    "challenge": "gandalf_gandalf",
+    "oracle": false
+  },
+  "45": {
+    "challenge": "gandalf_gandalf",
+    "oracle": false
+  },
+  "46": {
+    "challenge": "gandalf_do-not-tell",
+    "oracle": true
+  },
+  "47": {
+    "challenge": "gandalf_word-blacklist",
+    "oracle": true
+  },
+  "48": {
+    "challenge": "gandalf_gandalf",
+    "oracle": false
+  },
+  "49": {
+    "challenge": "gandalf_gandalf",
+    "oracle": false
+  },
+  "50": {
+    "challenge": "gandalf_gandalf",
+    "oracle": false
+  },
+  "51": {
+    "challenge": "gandalf_gandalf",
+    "oracle": false
+  },
+  "52": {
+    "challenge": "gandalf_gandalf",
+    "oracle": false
+  },
+  "53": {
+    "challenge": "gandalf_word-blacklist",
+    "oracle": true
+  },
+  "54": {
+    "challenge": "gandalf_do-not-tell",
+    "oracle": true
+  },
+  "55": {
+    "challenge": "gandalf_gandalf",
+    "oracle": false
+  },
+  "56": {
+    "challenge": "gandalf_gandalf",
+    "oracle": false
+  },
+  "57": {
+    "challenge": "gandalf_gandalf",
+    "oracle": false
+  },
+  "58": {
+    "challenge": "gandalf_word-blacklist",
+    "oracle": true
+  },
+  "59": {
+    "challenge": "gandalf_gandalf",
+    "oracle": false
+  },
+  "60": {
+    "challenge": "gandalf_gandalf",
+    "oracle": false
+  },
+  "61": {
+    "challenge": "gandalf_gandalf",
+    "oracle": false
+  },
+  "62": {
+    "challenge": "gandalf_gandalf",
+    "oracle": false
+  },
+  "63": {
+    "challenge": "gandalf_gandalf",
+    "oracle": false
+  },
+  "64": {
+    "challenge": "gandalf_do-not-tell",
+    "oracle": true
+  },
+  "65": {
+    "challenge": "gandalf_gandalf",
+    "oracle": false
+  },
+  "66": {
+    "challenge": "gandalf_gandalf",
+    "oracle": false
+  },
+  "67": {
+    "challenge": "gandalf_gandalf",
+    "oracle": false
+  },
+  "68": {
+    "challenge": "gandalf_gandalf",
+    "oracle": false
+  },
+  "69": {
+    "challenge": "gandalf_gandalf",
+    "oracle": false
+  },
+  "70": {
+    "challenge": "gandalf_gandalf",
+    "oracle": false
+  },
+  "71": {
+    "challenge": "gandalf_gandalf",
+    "oracle": false
+  },
+  "72": {
+    "challenge": "gandalf_gandalf",
+    "oracle": false
+  },
+  "73": {
+    "challenge": "gandalf_gandalf",
+    "oracle": false
+  },
+  "74": {
+    "challenge": "gandalf_gandalf",
+    "oracle": false
+  },
+  "75": {
+    "challenge": "gandalf_gandalf",
+    "oracle": false
+  },
+  "76": {
+    "challenge": "gandalf_gandalf",
+    "oracle": false
+  },
+  "77": {
+    "challenge": "gandalf_word-blacklist",
+    "oracle": true
+  },
+  "78": {
+    "challenge": "gandalf_gandalf",
+    "oracle": false
+  },
+  "79": {
+    "challenge": "gandalf_gandalf",
+    "oracle": false
+  },
+  "80": {
+    "challenge": "gandalf_word-blacklist",
+    "oracle": true
+  },
+  "81": {
+    "challenge": "gandalf_gandalf",
+    "oracle": false
+  },
+  "82": {
+    "challenge": "gandalf_do-not-tell",
+    "oracle": true
+  },
+  "83": {
+    "challenge": "gandalf_word-blacklist",
+    "oracle": true
+  },
+  "84": {
+    "challenge": "gandalf_gandalf",
+    "oracle": false
+  },
+  "85": {
+    "challenge": "gandalf_gandalf",
+    "oracle": false
+  },
+  "86": {
+    "challenge": "gandalf_gandalf",
+    "oracle": false
+  },
+  "87": {
+    "challenge": "gandalf_word-blacklist",
+    "oracle": true
+  },
+  "88": {
+    "challenge": "gandalf_do-not-tell",
+    "oracle": true
+  },
+  "89": {
+    "challenge": "gandalf_gandalf",
+    "oracle": false
+  }
+}
