@@ -1,5 +1,7 @@
 # RedAgent
 
+[![Regression checks](https://github.com/abdel-saw/redagent/actions/workflows/checks.yml/badge.svg)](https://github.com/abdel-saw/redagent/actions/workflows/checks.yml)
+
 **Red teaming d'applications LLM et évaluation de la fiabilité des juges.**
 
 RedAgent est un projet de fin d'études en ingénierie informatique à la FST
@@ -220,6 +222,13 @@ Prévoir un environnement virtuel séparé et consulter le
 ```bash
 python -m unittest discover -s tests -v
 ```
+
+Le workflow [Regression checks](.github/workflows/checks.yml) exécute ces tests
+sur Linux, Windows et macOS avec Python 3.11 et 3.12 à chaque pull request vers
+`main` et chaque push sur `main`. Il vérifie aussi les dépendances, compile les
+modules et agrège les résultats publiés avec `python -S`, sans site-packages.
+Les contrôles ne demandent aucune clé API ; LiteLLM utilise sa table de coûts
+locale pendant les tests.
 
 Les tests vérifient la priorité des clés, les chemins personnalisés, le rejeu
 et le runner depuis un autre répertoire, et l'agrégation sans dépendances
