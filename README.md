@@ -13,6 +13,7 @@ séparément les verdicts d'un juge LLM.
 with deterministic outcome checks, separate LLM judge evaluation, and
 comparison experiments against PyRIT.*
 
+[Démo interactive](demo/README.md) ·
 [Explorer les résultats](#explorer-les-résultats-sans-clé-api) ·
 [Architecture](#architecture) ·
 [Protocole](SPEC.md) ·
@@ -66,6 +67,21 @@ La validité de chaque oracle reste limitée au défi et aux vérifications
 implémentées ; réussir un smoke test ne constitue pas une preuve générale.
 Les analyses contre les annotations humaines sont également disponibles dans
 les [résultats](experiments/results/) et le [rapport méthodologique](report/methodologie_et_exp2.md).
+
+## Démo interactive des résultats
+
+Le dossier [demo/](demo/README.md) contient un explorateur statique destiné à
+présenter le projet : filtres par expérience et défi, taux de capture avec
+intervalles de Wilson, et analyse séparée de la fiabilité des juges.
+Il ne lance aucune attaque et ne demande aucune clé API.
+
+Les données de la démo sont produites à partir des journaux publiés par
+`python scripts/build_demo.py`. Seuls des comptages agrégés sont exportés ;
+les prompts, réponses et secrets capturés restent hors de cet export.
+La CI vérifie que le fichier exporté correspond aux sources.
+
+Le [guide de déploiement](demo/README.md#github-pages) explique comment activer
+l'hébergement gratuit avec GitHub Pages après fusion du workflow.
 
 ## Explorer les résultats sans clé API
 

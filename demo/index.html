@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Explore RedAgent's published LLM red teaming experiments and judge reliability results. A computer science capstone by Abdel Sawadogo.">
+  <meta name="theme-color" content="#123d3b">
+  <title>RedAgent — LLM evaluation explorer</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css">
+  <script src="data.js" defer></script>
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <a class="skip" href="#explorer">Skip to results</a>
+  <header class="site-header wrap">
+    <a class="brand" href="#"><span class="brand-mark" aria-hidden="true">R</span> RedAgent<span class="brand-detail">/ research explorer</span></a>
+    <nav aria-label="Main navigation"><a href="#method">Method</a><a href="https://github.com/abdel-saw/redagent">Source code</a><a class="nav-contact" href="mailto:abdelsawadogo51@gmail.com">Contact Abdel</a></nav>
+  </header>
+  <main>
+    <section class="hero wrap" aria-labelledby="title">
+      <div>
+        <p class="eyebrow">APPLIED AI · ENGINEERING CAPSTONE</p>
+        <h1 id="title">LLM security,<br><span>measured.</span></h1>
+        <p class="hero-copy">Explore how RedAgent tests LLM applications and checks the reliability of the models judging them.</p>
+        <div class="hero-links"><a class="button primary" href="#explorer">Explore the results</a><a class="text-link" href="https://github.com/abdel-saw/redagent/blob/main/rapport_latex/main.pdf">Read the thesis</a></div>
+        <p class="byline">Built by <strong>Abdel Sawadogo</strong> · FST Settat · 2026</p>
+      </div>
+      <aside class="method-preview" aria-label="Evaluation approach">
+        <div class="panel-label">TWO QUESTIONS. SEPARATE MEASUREMENTS.</div>
+        <div class="preview-step"><span class="step-symbol" aria-hidden="true">A</span><div><h2>Did the attack succeed?</h2><p>A deterministic oracle checks the benchmark outcome.</p></div></div>
+        <div class="preview-step"><span class="step-symbol second" aria-hidden="true">J</span><div><h2>Did the judge get it right?</h2><p>LLM verdicts are compared with those oracle labels.</p></div></div>
+        <div class="snapshot-label"><span aria-hidden="true">▤</span> Published results · no live scans</div>
+      </aside>
+    </section>
+
+    <section id="explorer" class="explorer-section" aria-labelledby="explorer-title">
+      <div class="wrap">
+        <div class="section-heading"><div><p class="eyebrow">THE EXPERIMENTS</p><h2 id="explorer-title">Follow the evidence.</h2></div><button id="download" class="button outline" type="button">Download aggregate data</button></div>
+        <div class="view-switch" role="tablist" aria-label="Experiment view">
+          <button id="attack-tab" role="tab" aria-selected="true" aria-controls="attack-panel" type="button">Attack outcomes</button>
+          <button id="judge-tab" role="tab" aria-selected="false" aria-controls="judge-panel" tabindex="-1" type="button">Judge reliability</button>
+        </div>
+
+        <div id="attack-panel" role="tabpanel" aria-labelledby="attack-tab">
+          <div class="toolbar"><label>Experiment<select id="attack-dataset"></select></label><label>Challenge<select id="challenge"></select></label><a id="attack-source" class="source-link" href="https://github.com/abdel-saw/redagent/tree/main/experiments/results">View source logs</a></div>
+          <div id="attack-summary" class="stats" aria-live="polite"></div>
+          <div class="results-panel"><div class="results-heading"><h3>Capture rate by attacker</h3><span>Captured runs / completed runs · 95% Wilson interval</span></div>
+            <div class="table-scroll"><table><caption class="sr-only">Attack outcomes for the selected experiment and challenge</caption><thead><tr><th scope="col">Attacker model</th><th scope="col">Captures / runs</th><th scope="col">Capture rate</th><th scope="col">95% interval</th></tr></thead><tbody id="attack-rows"></tbody></table></div>
+          </div>
+          <p class="interpretation"><strong>Read this as benchmark evidence.</strong> A capture is a successful run under that benchmark’s oracle. Unequal run counts and different conditions limit comparisons; this is not a general model ranking.</p>
+        </div>
+
+        <div id="judge-panel" role="tabpanel" aria-labelledby="judge-tab" hidden>
+          <div class="toolbar"><label>Replay cohort<select id="judge-dataset"></select></label><label>Inspect judge<select id="judge-model"></select></label><a id="judge-source" class="source-link" href="https://github.com/abdel-saw/redagent/tree/main/experiments/results">View source summary</a></div>
+          <div id="judge-summary" class="stats" aria-live="polite"></div>
+          <div class="judge-grid"><div class="results-panel"><div class="results-heading"><h3>Where verdicts agree</h3><span>Judged responses · oracle labels</span></div><div class="confusion-layout"><span class="axis-title">ORACLE OUTCOME</span><div class="confusion-matrix" id="confusion"></div></div></div>
+            <div class="judge-note"><p class="eyebrow">WHY THIS MATTERS</p><h3>A judge can miss a real capture.</h3><p>Recall measures how many oracle-positive responses the judge identifies. False negatives reveal successful attacks the judge missed.</p><p>Precision measures how often a positive verdict agrees with the oracle. False positives are positive verdicts without an oracle capture.</p><p class="cohort-note">These are separate historical replay cohorts. They are not automatically paired with the selected attack experiment, and oracle disagreement is not a universal measure of vulnerability.</p></div></div>
+          <div class="results-panel judge-table"><div class="results-heading"><h3>All judges in this cohort</h3><span>Select a model to inspect its counts</span></div><div class="table-scroll"><table><caption class="sr-only">Judge metrics calculated from the published confusion counts</caption><thead><tr><th scope="col">Judge model</th><th scope="col">Judged</th><th scope="col">Precision</th><th scope="col">Recall</th><th scope="col">F1</th><th scope="col">FP / FN</th><th scope="col">Errors</th></tr></thead><tbody id="judge-rows"></tbody></table></div></div>
+          <p class="interpretation">Metrics are recalculated from TP, FP, TN and FN. Errors are shown separately and excluded from metric denominators. A score of 100% on this sample does not establish universal reliability.</p>
+        </div>
+        <noscript><p>This explorer needs JavaScript. You can still <a href="https://github.com/abdel-saw/redagent/tree/main/experiments/results">read the published results on GitHub</a>.</p></noscript>
+      </div>
+    </section>
+
+    <section id="method" class="method-section wrap" aria-labelledby="method-title"><div class="method-intro"><p class="eyebrow">THE ENGINEERING</p><h2 id="method-title">A reproducible evaluation pipeline.</h2><p>RedAgent combines a Python attack engine with a research harness. The separation between generation, verification and judgment is the project’s central design choice.</p><div class="tags"><span>Python</span><span>LiteLLM</span><span>HTTP / JSON</span><span>Deterministic oracles</span><span>GitHub Actions</span></div></div><div class="method-list"><article><h3>Generate and adapt</h3><p>Seed prompts and model-generated mutations test selected OWASP categories through an HTTP adapter.</p></article><article><h3>Verify the outcome</h3><p>Benchmark-specific checks determine whether a secret was captured. Completed runs are logged for analysis.</p></article><article><h3>Audit the evaluator</h3><p>Previously collected responses are replayed to LLM judges. Their verdicts are evaluated separately from attack generation.</p></article></div></section>
+  </main>
+  <footer class="site-footer wrap"><div><strong>RedAgent</strong><p>A research prototype by Abdel Sawadogo.<br>This explorer presents recorded results and makes no model API calls.</p></div><nav aria-label="Project resources"><a href="https://github.com/abdel-saw/redagent">GitHub repository</a><a href="https://github.com/abdel-saw/redagent/blob/main/SPEC.md">Experimental protocol</a><a href="https://www.linkedin.com/in/abdel-sawadogo">LinkedIn</a></nav></footer>
+</body>
+</html>
