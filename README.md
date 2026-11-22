@@ -13,7 +13,8 @@ séparément les verdicts d'un juge LLM.
 with deterministic outcome checks, separate LLM judge evaluation, and
 comparison experiments against PyRIT.*
 
-[Démo interactive](demo/README.md) ·
+[Démo en ligne](https://abdel-saw.github.io/redagent/) ·
+[Guide de la démo](demo/README.md) ·
 [Explorer les résultats](#explorer-les-résultats-sans-clé-api) ·
 [Architecture](#architecture) ·
 [Protocole](SPEC.md) ·
@@ -80,8 +81,9 @@ Les données de la démo sont produites à partir des journaux publiés par
 les prompts, réponses et secrets capturés restent hors de cet export.
 La CI vérifie que le fichier exporté correspond aux sources.
 
-Le [guide de déploiement](demo/README.md#github-pages) explique comment activer
-l'hébergement gratuit avec GitHub Pages après fusion du workflow.
+L'explorateur est accessible sur **[abdel-saw.github.io/redagent](https://abdel-saw.github.io/redagent/)**.
+Le [guide de déploiement](demo/README.md#github-pages) décrit la publication
+et la mise à jour du site avec GitHub Pages.
 
 ## Explorer les résultats sans clé API
 
