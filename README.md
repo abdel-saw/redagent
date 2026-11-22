@@ -33,8 +33,9 @@ comparison experiments against PyRIT.*
 **État de cette version.** Le dépôt contient le moteur et les scripts
 d'expérimentation. Il ne contient pas de point d'entrée web FastAPI ni de
 templates HTMX permettant de lancer l'interface présentée dans le mémoire.
-Certains scripts conservent des chemins propres à l'environnement d'origine ;
-les expériences live demandent donc une adaptation de configuration.
+Les entrées principales utilisent les clés du shell ou un fichier `.env` local,
+ainsi que des chemins configurables. Les cibles et modèles doivent être
+configurés avant de lancer les expériences live.
 La consultation et l'agrégation des résultats ci-dessous ne nécessitent
 ni serveur, ni clé API, ni accès aux cibles.
 
@@ -147,28 +148,52 @@ source .venv/bin/activate
 ```
 
 ```bash
-python -m pip install httpx litellm pydantic
+python -m pip install -r requirements.txt
 ```
 
-Il n'existe pas encore de fichier de dépendances verrouillé dans ce dépôt.
-Les scripts de génération de documents et d'analyse des annotations humaines
-peuvent demander des dépendances supplémentaires.
+`requirements.txt` fixe les versions des dépendances directes testées du moteur.
+Les dépendances transitives ne sont pas verrouillées. Les outils de génération
+de documents et PyRIT utilisent des dépendances supplémentaires dans des
+environnements séparés.
 
 Avant tout appel live :
 
 1. Adapter les endpoints dans [targets.json](experiments/config/targets.json)
    ou [gandalf.json](experiments/config/gandalf.json).
 2. Vérifier les modèles et le budget dans [models.json](experiments/config/models.json).
-3. Adapter le chargement des clés : `runner.py`, `replay.py` et
-   `pyrit_compare.py` lisent actuellement un fichier `.env` à un chemin WSL
-   propre à la machine d'origine. Définir uniquement des variables
-   d'environnement ne remplace pas ce chargeur.
+3. Copier `.env.example` vers `.env` à la racine du dépôt et renseigner les
+   clés nécessaires, ou définir `OPENAI_API_KEY` et `GROQ_API_KEY` dans le shell.
+   Les valeurs du shell ont priorité, y compris une valeur vide. Une clé requise
+   manquante provoque une erreur avant l'appel au modèle.
 4. Utiliser des cibles dont le test est autorisé et vérifier les quotas
    des fournisseurs. Les appels live peuvent être facturés.
 5. Employer un nouveau `--tag` pour isoler les nouvelles sorties des
    résultats publiés.
 
-Après cette adaptation, les commandes du protocole comprennent :
+### Chemins portables
+
+Le runner, le rejeu, la comparaison PyRIT et l'agrégation utilisent les mêmes
+chemins. Les deux smoke tests utilisent aussi le répertoire de configuration.
+Définir les variables suivantes **dans le shell** pour remplacer les valeurs
+par défaut :
+
+| Variable | Valeur par défaut | Usage |
+| --- | --- | --- |
+| `REDAGENT_ENV_FILE` | `.env` à la racine du dépôt | Choisir un autre fichier de clés |
+| `REDAGENT_CONFIG_DIR` | `experiments/config` | Fichiers `targets.json`, `gandalf.json` et `models.json` |
+| `REDAGENT_RESULTS_DIR` | `experiments/results` | Racine des entrées et sorties expérimentales |
+
+Les chemins relatifs partent de la racine du dépôt, quel que soit le répertoire
+courant. Un fichier de clés explicitement sélectionné doit exister. Les clés
+ne sont ni affichées, ni écrites, ni interpolées dans le chargeur.
+Les scripts historiques d'analyse des annotations et `pyrit_toys.py` gardent
+leur configuration propre.
+
+Le rejeu utilise les résultats locaux par défaut. Choisir explicitement un jeu
+publié avec `--source mtxA_seedmut`, par exemple ; aucun chemin vers l'ancienne
+machine Windows n'est nécessaire.
+
+Après configuration, les commandes du protocole comprennent :
 
 ```bash
 # Une cellule PromptMe, sorties isolées
@@ -190,10 +215,20 @@ La comparaison PyRIT utilise la version `0.14.0` dans le protocole d'origine.
 Prévoir un environnement virtuel séparé et consulter le
 [rapport de comparaison](report/tier2_comparaison_pyrit.md) avant de l'exécuter.
 
+## Vérifier la configuration sans appel live
+
+```bash
+python -m unittest discover -s tests -v
+```
+
+Les tests vérifient la priorité des clés, les chemins personnalisés, le rejeu
+et le runner depuis un autre répertoire, et l'agrégation sans dépendances
+externes. Ils ne lancent pas d'attaque et n'appellent aucun fournisseur.
+
 ## Limites et prochaines améliorations
 
-- Rendre les chemins de configuration et le chargement des clés portables.
-- Ajouter un fichier de dépendances reproductible et des tests automatisés.
+- Étendre les tests aux appels modèles et aux adaptateurs de cibles.
+- Verrouiller aussi les dépendances transitives et tester plusieurs plateformes.
 - Documenter séparément les composants d'interface décrits dans le mémoire.
 - Interpréter les mesures avec leurs effectifs, leurs incertitudes et les
   conditions des bancs d'essai.
@@ -207,3 +242,4 @@ Soutenance : **22 juin 2026**
 Projet destiné à l'évaluation autorisée d'applications LLM. Le dépôt ne
 contient actuellement pas de fichier de licence ; aucune licence open source
 particulière n'est revendiquée ici.
+

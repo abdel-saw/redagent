@@ -1,0 +1,6 @@
+# Runtime dependencies for the attack engine and experiment scripts.
+# PyRIT and document-generation tools use separate environments.
+httpx==0.28.1
+litellm==1.110.2
+pydantic==2.14.4
+python-dotenv==1.2.4

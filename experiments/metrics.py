@@ -18,10 +18,12 @@ import sys
 from collections import defaultdict
 from pathlib import Path
 
+from experiments.configuration import results_dir
+
 ROOT = Path(__file__).resolve().parent
 # --dir <sous-dossier> pour analyser une ablation (results/<dir>)
 _arg = [a for a in sys.argv[1:] if not a.startswith("-")]
-RESULTS = (ROOT / "results" / _arg[0]) if _arg else (ROOT / "results")
+RESULTS = (results_dir() / _arg[0]) if _arg else results_dir()
 
 
 def _load(name: str) -> list[dict]:
@@ -161,3 +163,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+

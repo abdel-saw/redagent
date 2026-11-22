@@ -37,12 +37,15 @@ from app.llm import (
 )
 from app.recon import profile_target, recon_brief
 from app.target_adapter import AdapterConfig, send_prompt
+from experiments.configuration import (
+    config_dir, results_dir, load_keys as _load_keys, key_for as _key_for,
+)
 from experiments.oracle import OracleSpec, OracleResult, evaluate, load_specs
 
 ROOT = Path(__file__).resolve().parent
-CFG = ROOT / "config"
-RESULTS = ROOT / "results"
-RESULTS.mkdir(exist_ok=True)
+CFG = config_dir()
+RESULTS = results_dir()
+RESULTS.mkdir(parents=True, exist_ok=True)
 
 TARGETS = json.loads((CFG / "targets.json").read_text(encoding="utf-8"))
 SPECS = load_specs(CFG / "targets.json")
@@ -57,8 +60,6 @@ CHALLENGE_MODULE = {
     "LLM07": "llm07_system_prompt_leak",
 }
 
-# .env (clés BYOK) — lu depuis le .env PromptMe via le partage WSL (jamais affiché)
-WSL_ENV = Path(r"\\wsl$\Ubuntu\root\promptme-lite\.env")
 
 # throttle Groq (free tier) : intervalle mini entre appels attaquant + backoff
 GROQ_MIN_INTERVAL_S = 2.0
@@ -101,24 +102,6 @@ class CellResult:
 # --------------------------------------------------------------------------- #
 # Clés / providers
 # --------------------------------------------------------------------------- #
-def _load_keys() -> dict[str, str]:
-    keys: dict[str, str] = {}
-    if WSL_ENV.exists():
-        for line in WSL_ENV.read_text(encoding="utf-8-sig").splitlines():
-            line = line.strip()
-            if not line or line.startswith("#") or "=" not in line:
-                continue
-            k, v = line.split("=", 1)
-            keys[k.strip()] = v.strip().strip('"').strip("'")
-    return keys
-
-
-def _key_for(model: str, keys: dict[str, str]) -> str:
-    if model.startswith("groq/"):
-        return keys.get("GROQ_API_KEY", "")
-    return keys.get("OPENAI_API_KEY", "")
-
-
 def _adapter(challenge: str) -> AdapterConfig:
     a = TARGETS[challenge]["adapter"]
     return AdapterConfig(
@@ -443,7 +426,7 @@ def main() -> None:
         challenges = ["LLM02", "LLM06", "LLM07"]
 
     if args.tag:
-        RESULTS = ROOT / "results" / args.tag
+        RESULTS = results_dir() / args.tag
         RESULTS.mkdir(parents=True, exist_ok=True)
         _p(f"[tag] résultats -> {RESULTS}")
 
@@ -465,3 +448,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+

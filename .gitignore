@@ -2,6 +2,7 @@
 config.txt
 .env
 .env.*
+!.env.example
 *.key
 secrets.*
 
@@ -44,3 +45,7 @@ __pycache__/
 # --- OS ---
 .DS_Store
 Thumbs.db
+
+# Local experiment outputs (published results remain tracked)
+local_results/
+

@@ -30,6 +30,9 @@ from pyrit.executor.attack import (
 )
 
 from app.target_adapter import AdapterConfig, send_prompt
+from experiments.configuration import (
+    config_dir, results_dir, load_keys as _load_keys, key_for as _key_for,
+)
 from experiments.oracle import OracleResult, evaluate, load_specs
 
 # Critères de juge GÉNÉRIQUES — copie des constantes de experiments/replay.py (figés ici
@@ -53,8 +56,7 @@ _GANDALF_CRITERIA = (
 )
 
 ROOT = Path(__file__).resolve().parent
-CFG = ROOT / "config"
-WSL_ENV = Path(r"\\wsl$\Ubuntu\root\promptme-lite\.env")
+CFG = config_dir()
 
 ATTACKER = "gpt-4o-mini-2024-07-18"          # tenu constant (pré-enregistrement §4)
 OPENAI_ENDPOINT = "https://api.openai.com/v1"   # le SDK OpenAI ajoute /chat/completions
@@ -91,18 +93,6 @@ BENCHES = {
 
 def _p(s: str) -> None:
     print(str(s).encode("ascii", "replace").decode("ascii"))
-
-
-def _load_keys() -> dict[str, str]:
-    keys: dict[str, str] = {}
-    if WSL_ENV.exists():
-        for line in WSL_ENV.read_text(encoding="utf-8-sig").splitlines():
-            line = line.strip()
-            if not line or line.startswith("#") or "=" not in line:
-                continue
-            k, v = line.split("=", 1)
-            keys[k.strip()] = v.strip().strip('"').strip("'")
-    return keys
 
 
 def _adapter(targets: dict, challenge: str) -> AdapterConfig:
@@ -222,11 +212,11 @@ def _done_cells(results: Path) -> set[str]:
 async def main_async(bench: str, tag: str, smoke: bool) -> None:
     await initialize_pyrit_async(memory_db_type=IN_MEMORY)
     keys = _load_keys()
-    key = keys.get("OPENAI_API_KEY", "")
+    key = _key_for(ATTACKER, keys)
     b = BENCHES[bench]
     targets = json.loads((CFG / b["config"]).read_text(encoding="utf-8"))
     specs = load_specs(CFG / b["config"])
-    results = ROOT / "results" / tag
+    results = results_dir() / tag
     results.mkdir(parents=True, exist_ok=True)
     done = _done_cells(results)
 
@@ -262,3 +252,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+

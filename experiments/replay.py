@@ -4,8 +4,8 @@ Rejoue les tuples (prompt, réponse, label_oracle) loggés par Exp.1 à travers 
 pool de juges et compare le verdict du JUGE LLM au label de l'ORACLE déterministe.
 Aucune nouvelle attaque -> coût borné. Produit précision/rappel/F1/FP/FN par juge.
 
-Auto-suffisant (ne dépend pas de runner.py). Lit les **tuples existants** produits
-en V1 ; écrit les résultats V2 dans `redagentV2/experiments/results/`.
+Auto-suffisant (ne dépend pas de runner.py). Lit les tuples locaux ou le dossier
+choisi avec --source ; écrit dans la racine de résultats ou le dossier --tag.
 
 Échantillonnage équilibré : tous les positifs oracle (rares) + un échantillon de
 négatifs (seed fixe), pour des métriques exploitables à coût maîtrisé (o4-mini).
@@ -24,20 +24,20 @@ import time
 from pathlib import Path
 
 from app.llm import BudgetExceeded, BudgetTracker, JudgeLLM, UsageTracker
+from experiments.configuration import (
+    config_dir, results_dir, load_keys as _load_keys, key_for as _key_for,
+)
 
 ROOT = Path(__file__).resolve().parent
-CFG = ROOT / "config"
+CFG = config_dir()
 MODELS = json.loads((CFG / "models.json").read_text(encoding="utf-8"))
 BUDGET_CAP = float(MODELS.get("budget_cap_usd", 2.0))
-RESULTS = ROOT / "results"
+RESULTS = results_dir()
 RESULTS.mkdir(parents=True, exist_ok=True)
 
-# Tuples EXISTANTS (produits en V1) : principal + ablations.
-_V1 = Path(r"C:\Users\HP\Desktop\redagent\experiments\results")
-SOURCES = [_V1, _V1 / "abl_norecon", _V1 / "abl_conv"]
+# Default to local results; --source selects a published or new run folder.
+SOURCES = [RESULTS]
 
-# .env (clés BYOK) — lu depuis le .env PromptMe via le partage WSL (jamais affiché).
-WSL_ENV = Path(r"\\wsl$\Ubuntu\root\promptme-lite\.env")
 GROQ_MIN_INTERVAL_S = 2.0
 RATELIMIT_BACKOFF_S = (5, 15, 40)
 
@@ -102,24 +102,6 @@ def _kappa(tp: int, fp: int, tn: int, fn: int) -> float:
 
 def _p(s: str) -> None:
     print(str(s).encode("ascii", "replace").decode("ascii"))
-
-
-def _load_keys() -> dict[str, str]:
-    keys: dict[str, str] = {}
-    if WSL_ENV.exists():
-        for line in WSL_ENV.read_text(encoding="utf-8-sig").splitlines():
-            line = line.strip()
-            if not line or line.startswith("#") or "=" not in line:
-                continue
-            k, v = line.split("=", 1)
-            keys[k.strip()] = v.strip().strip('"').strip("'")
-    return keys
-
-
-def _key_for(model: str, keys: dict[str, str]) -> str:
-    if model.startswith("groq/"):
-        return keys.get("GROQ_API_KEY", "")
-    return keys.get("OPENAI_API_KEY", "")
 
 
 def _is_rate_limit(exc: Exception) -> bool:
@@ -236,7 +218,7 @@ async def main_async(n_neg: int) -> None:
     budget = BudgetTracker(cap_usd=BUDGET_CAP)
     pool = _load_tuples()
     if not pool:
-        _p("aucun tuple trouvé — vérifie les chemins SOURCES (résultats V1)"); return
+        _p("aucun tuple trouvé — utilise --source pour sélectionner un dossier de résultats"); return
     sample = _sample(pool, n_neg)
     npos = sum(1 for t in sample if t["oracle"])
     _p(f"Pool={len(pool)} tuples | echantillon={len(sample)} ({npos} positifs, {len(sample)-npos} negatifs)\n")
@@ -269,16 +251,16 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--neg", type=int, default=100, help="nb de negatifs echantillonnes")
     ap.add_argument("--source", default="",
-                    help="sous-dossier results/<source> source des tuples ; vide = tuples V1")
+                    help="sous-dossier results/<source> source des tuples ; vide = racine de résultats locale")
     ap.add_argument("--tag", default="",
                     help="sous-dossier results/<tag> pour les sorties ; vide = results/")
     args = ap.parse_args()
 
     global SOURCES, RESULTS
     if args.source:
-        SOURCES = [ROOT / "results" / args.source]
+        SOURCES = [results_dir() / args.source]
     if args.tag:
-        RESULTS = ROOT / "results" / args.tag
+        RESULTS = results_dir() / args.tag
         RESULTS.mkdir(parents=True, exist_ok=True)
         _p(f"[tag] sorties -> {RESULTS}")
 
@@ -287,3 +269,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
