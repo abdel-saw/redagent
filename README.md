@@ -1,217 +1,209 @@
-# RedAgent — Agent autonome de red teaming pour applications LLM
+# RedAgent
 
-> **Projet de Fin d'Études (Cycle Ingénieur, Ingénierie Informatique)**
-> Auteur : **SAWADOGO S Abdel K N** · Encadrant : **Pr DABOUNOU**
-> FST Settat — Université Hassan 1er · Soutenance : 22 juin 2026
+**Red teaming d'applications LLM et évaluation de la fiabilité des juges.**
 
-RedAgent est un **agent léger de red teaming** (BYOK, observable) qui audite en
-boîte-noire des applications fondées sur des LLM contre le **OWASP Top 10 for LLM
-Applications (édition 2025)**. Le projet livre **deux artefacts distincts** :
+RedAgent est un projet de fin d'études en ingénierie informatique à la FST
+Settat. Il associe un moteur d'attaque Python à un protocole expérimental :
+mesurer la capture d'un secret avec un oracle déterministe, puis évaluer
+séparément les verdicts d'un juge LLM.
 
-1. **Un outil** — un moteur d'attaque autonome (boucle *seed → mutate*) piloté par
-   un LLM attaquant, qui audite une cible via un simple template HTTP/JSON.
-2. **Une méthodologie rigoureuse et agnostique à l'outil** pour *évaluer* ce type
-   d'agent — c'est la **colonne vertébrale scientifique** du mémoire.
+*English summary: a Python research project for black-box LLM red teaming,
+with deterministic outcome checks, separate LLM judge evaluation, and
+comparison experiments against PyRIT.*
 
----
+[Explorer les résultats](#explorer-les-résultats-sans-clé-api) ·
+[Architecture](#architecture) ·
+[Protocole](SPEC.md) ·
+[Mémoire PDF](rapport_latex/main.pdf) ·
+[Présentation](presentation/soutenance_redagent.pptx)
 
-## 1. Thèse
+## Ce que contient ce dépôt
 
-> On ne prétend pas avoir construit « l'attaquant le plus fort ». On livre un
-> outil **léger, BYOK, observable**, **et** une méthodologie pour évaluer
-> honnêtement ce type d'outil, démontrée par (i) la **mesure de fiabilité d'un
-> juge LLM** contre une **vérité-terrain déterministe**, et (ii) une **comparaison
-> contrôlée et pré-enregistrée contre PyRIT** sur des cibles tierces.
+- **Moteur d'attaque** : scénarios initiaux, mutations générées par LLM,
+  adaptateurs HTTP/JSON et suivi de consommation.
+- **Évaluation de l'attaquant** : capture décidée par un oracle déterministe,
+  avec journaux par tentative et par exécution.
+- **Évaluation des juges** : rejeu des réponses, précision, rappel, F1,
+  faux positifs, faux négatifs et accord de Cohen.
+- **Comparaison avec PyRIT** : expériences sur des cibles et des critères
+  d'évaluation communs, avec [protocole pré-enregistré](report/tier2_preregistration_pyrit.md).
+- **Résultats consultables** : fichiers JSONL/CSV, synthèses et documents
+  académiques inclus dans le dépôt.
 
-Un compromis mesuré (taux de capture *vs* légèreté / BYOK / observabilité) est un
-résultat valide : **RedAgent n'a pas besoin de « gagner »** pour que la
-contribution méthodologique tienne.
+**État de cette version.** Le dépôt contient le moteur et les scripts
+d'expérimentation. Il ne contient pas de point d'entrée web FastAPI ni de
+templates HTMX permettant de lancer l'interface présentée dans le mémoire.
+Certains scripts conservent des chemins propres à l'environnement d'origine ;
+les expériences live demandent donc une adaptation de configuration.
+La consultation et l'agrégation des résultats ci-dessous ne nécessitent
+ni serveur, ni clé API, ni accès aux cibles.
 
----
+## Architecture
 
-## 2. Contribution centrale : découpler l'oracle du juge
+![Architecture du projet RedAgent](fig_architecture.png)
 
-Le cœur scientifique du projet est la **séparation stricte de deux notions de
-« succès »** qui étaient confondues dans les travaux antérieurs :
+| Composant | Fichiers | Rôle |
+| --- | --- | --- |
+| Moteur | [app/attacks/](app/attacks/), [app/llm.py](app/llm.py) | Générer et muter les tentatives ; suivre les appels aux modèles |
+| Adaptateur | [app/target_adapter.py](app/target_adapter.py) | Envoyer les requêtes et extraire la réponse d'une cible |
+| Expérience 1 | [experiments/runner.py](experiments/runner.py), [oracle.py](experiments/oracle.py) | Mesurer la capture selon les critères du banc d'essai |
+| Expérience 2 | [experiments/replay.py](experiments/replay.py) | Comparer les verdicts des juges aux labels de l'oracle |
+| Analyse | [experiments/metrics.py](experiments/metrics.py) | Agréger les captures et calculer les intervalles de Wilson |
+| Comparaison | [experiments/pyrit_compare.py](experiments/pyrit_compare.py) | Exécuter le protocole comparatif avec PyRIT |
 
-| | **Oracle déterministe** | **Juge LLM** |
-|---|---|---|
-| Question posée | « Le flag/secret a-t-il été *capturé* ? » | « La réponse *trahit-elle* une vulnérabilité ? » |
-| Nature | Mécanique, reproductible (regex + post-step HTTP) | Probabiliste, sujet à erreur |
-| Rôle | **Vérité-terrain** de l'évaluation | Composant *audité* |
-| Emplacement | `experiments/` uniquement | `app/` (utilisé par l'outil interactif) |
+### Pourquoi séparer l'oracle du juge
 
-**Découplage vérifié structurellement** : l'orchestrateur interactif n'importe
-*jamais* l'oracle. L'oracle ne vit que dans le harnais expérimental. Cela évite la
-**validation circulaire** (juger un outil avec son propre juge non validé).
+Un juge LLM peut reconnaître une vulnérabilité à tort ou manquer une fuite.
+Sur les défis à secret vérifiable, l'oracle fournit un critère de capture
+distinct du verdict du juge. L'expérience 1 mesure l'attaquant avec cet oracle ;
+l'expérience 2 réutilise les réponses pour mesurer le juge.
 
-### Deux expériences bâties sur ce découplage
+Cette séparation évite de valider le moteur uniquement avec son propre juge.
+La validité de chaque oracle reste limitée au défi et aux vérifications
+implémentées ; réussir un smoke test ne constitue pas une preuve générale.
+Les analyses contre les annotations humaines sont également disponibles dans
+les [résultats](experiments/results/) et le [rapport méthodologique](report/methodologie_et_exp2.md).
 
-- **Exp.1 — Efficacité de l'attaquant** (`experiments/runner.py`) : pour chaque
-  cellule *(attaquant × défi × run)*, on déroule la boucle du moteur contre la
-  cible ; **le succès est tranché par l'oracle**, jamais par un juge. Résultat :
-  une matrice de taux de capture.
-- **Exp.2 — Fiabilité des juges** (`experiments/replay.py`) : on **rejoue** les
-  tuples *(prompt, réponse, label_oracle)* loggés par Exp.1 à travers un pool de
-  juges LLM, et on compare chaque verdict au label de l'oracle. Coût borné (aucune
-  nouvelle attaque). Produit précision / rappel / F1 / FP / FN par juge, plus le
-  **κ de Cohen** contre un **gold standard humain**.
+## Explorer les résultats sans clé API
 
-> **Validation de l'oracle lui-même** (`experiments/_smoke_oracle.py`) : avant de
-> bâtir quoi que ce soit dessus, l'oracle est prouvé sur 3 propriétés / 12 cas —
-> **sensibilité** (se déclenche sur les payloads connus-bons, en live), **reconnaissance**
-> (repère le flag s'il apparaît), **spécificité** (reste négatif sur un refus
-> explicite et sur un leurre `JWT_SECRET`). 12/12 = oracle prouvé.
-
----
-
-## 3. Périmètre OWASP (verrouillé)
-
-Catégories testables en **boîte-noire JSON**, donc retenues :
-
-| Code | Catégorie | Défi de validation |
-|------|-----------|--------------------|
-| **LLM01** | Prompt Injection | PromptMe |
-| **LLM02** | Sensitive Information Disclosure | PromptMe (RAG + post-step token) |
-| **LLM06** | Excessive Agency | PromptMe |
-| **LLM07** | System Prompt Leakage | PromptMe |
-
-LLM03/04/08 sont exclus (nécessitent un accès au pipeline / embeddings, hors
-boîte-noire). Voir `SPEC.md` pour la justification complète et le statut de
-LLM05/09/10.
-
-**Cibles** : PromptMe (CTF à flags déterministes = oracle) et **Gandalf** (Lakera,
-cible tierce publique dont l'oracle — `guess-password` — est **indépendant de
-l'auteur**, ce qui renforce l'anti-circularité).
-
----
-
-## 4. Structure du projet
-
-```
-redagentV2/
-├── app/                          # LE MOTEUR (itération 1 — l'outil ; utilise le JUGE)
-│   ├── config.py                 #   réglages centraux (budget, modèles, BYOK)
-│   ├── llm.py                    #   wrapper LiteLLM : suivi coût + JUGE LLM
-│   ├── target_adapter.py         #   adaptateur HTTP générique ({{prompt_json}}, response_path)
-│   ├── recon.py                  #   reconnaissance opt-in, pilotée par LLM (générique)
-│   └── attacks/                  #   catalogue d'attaques (une par catégorie OWASP)
-│       ├── base.py               #     AttackModule abstrait + SeededAttack (seed→mutate)
-│       ├── llm01_prompt_injection.py
-│       ├── llm02_sensitive_info.py
-│       ├── llm06_excessive_agency.py
-│       └── llm07_system_prompt_leak.py
-│
-├── experiments/                  # LE HARNAIS (itération 2 — la méthode ; utilise l'ORACLE)
-│   ├── oracle.py                 #   oracle déterministe (regex + post-step HTTP)
-│   ├── runner.py                 #   Exp.1 — efficacité attaquant (tranchée par l'oracle)
-│   ├── replay.py                 #   Exp.2 — fiabilité des juges (rejoue les tuples)
-│   ├── metrics.py                #   agrégation : capture-rate, Wilson CI, κ de Cohen
-│   ├── pyrit_compare.py          #   Tier 2 — comparaison head-to-head vs PyRIT
-│   ├── _smoke_oracle.py          #   T0.1 — preuve de l'oracle (3 propriétés / 12 cas)
-│   ├── config/                   #   targets.json, gandalf.json, models.json
-│   └── results/                  #   sorties expérimentales + gold standard humain
-│
-├── SPEC.md                       # spécification verrouillée (thèse, périmètre, protocole)
-└── PROJECT_BRIEF.md              # charte projet (contrat de travail)
-```
-
----
-
-## 5. Installation
-
-**Prérequis** : Python 3.11+, et une cible à auditer (p. ex. PromptMe-Lite en
-local, ou Gandalf en ligne).
+Prérequis : Python 3.11+ et Git. Depuis un terminal :
 
 ```bash
-git clone <URL_DU_DEPOT>
-cd redagentV2
+git clone https://github.com/abdel-saw/redagent.git
+cd redagent
+python -m experiments.metrics mtxA_seedmut
+```
+
+Cette commande utilise uniquement la bibliothèque standard Python. Elle lit
+les journaux déjà publiés, affiche les taux de capture et les intervalles
+de Wilson à 95 %, puis régénère
+`experiments/results/mtxA_seedmut/exp1_summary.csv`.
+Elle ne lance aucune attaque et ne fait aucun appel à un fournisseur.
+
+Autres jeux de résultats :
+
+```bash
+python -m experiments.metrics mtxB_mutonly
+python -m experiments.metrics gandalf_mtx
+python -m experiments.metrics pyrit_promptme
+python -m experiments.metrics pyrit_gandalf
+```
+
+### Exemple issu des journaux publiés
+
+L'agrégation du jeu `mtxA_seedmut` donne :
+
+| Défi | Captures / exécutions |
+| --- | --- |
+| LLM02 | 5 / 33 |
+| LLM06 | 4 / 33 |
+| LLM07 | 5 / 28 |
+
+Ces nombres agrègent plusieurs modèles attaquants. Les effectifs diffèrent
+selon les cellules ; ils ne constituent ni un classement général des modèles,
+ni une estimation de la sécurité de toutes les applications LLM.
+Pour les paramètres et les détails, consulter les
+[journaux](experiments/results/mtxA_seedmut/) et le
+[rapport de l'expérience 1](report/exp1_efficacite_attaquant.md).
+
+Les captures LLM07 de ce jeu proviennent de scénarios initiaux, tandis que
+les captures LLM02 et LLM06 proviennent de mutations. Cette distinction permet
+d'étudier la contribution de la génération adaptative sans attribuer toute
+capture au modèle attaquant.
+
+## Périmètre des expériences
+
+| Code | Catégorie | Banc documenté |
+| --- | --- | --- |
+| LLM01 | Prompt Injection | PromptMe |
+| LLM02 | Sensitive Information Disclosure | PromptMe |
+| LLM06 | Excessive Agency | PromptMe |
+| LLM07 | System Prompt Leakage | PromptMe et Gandalf |
+
+Le moteur ne couvre pas l'ensemble de l'OWASP Top 10. Les expériences
+PromptMe par défaut du runner portent sur LLM02, LLM06 et LLM07 ; les niveaux
+Gandalf utilisent le module LLM07. Voir [SPEC.md](SPEC.md) pour le périmètre
+et les exclusions.
+
+## Préparer les expériences live
+
+Les dépendances du moteur incluent `httpx`, `litellm` et `pydantic`.
+Dans un environnement virtuel :
+
+```bash
 python -m venv .venv
-# Windows :  .venv\Scripts\activate      Linux/macOS :  source .venv/bin/activate
-pip install httpx litellm pydantic
-# Pour la comparaison PyRIT (venv isolé recommandé) : pip install pyrit==0.14.0
 ```
 
----
+Activer l'environnement :
 
-## 6. Configuration & clés (BYOK)
-
-RedAgent est **BYOK (Bring Your Own Key)** : vous fournissez vos propres clés de
-fournisseur (OpenAI, Groq…). **Les clés ne sont jamais persistées ni journalisées
-par l'outil** — elles restent en mémoire le temps de l'exécution.
-
-Fournissez-les par variable d'environnement :
+```powershell
+# Windows PowerShell
+.\.venv\Scripts\Activate.ps1
+```
 
 ```bash
-export OPENAI_API_KEY="sk-..."
-export GROQ_API_KEY="gsk-..."
+# macOS / Linux
+source .venv/bin/activate
 ```
-
-> ⚠️ **Ne commitez jamais vos clés.** Le fichier `config.txt` (clés locales) est
-> volontairement exclu par `.gitignore`. Utilisez `.env` / variables
-> d'environnement.
-
-Les cibles se configurent par un **template JSON** (principe *« fidèle à l'usage
-réel »* : l'outil ne patche jamais la cible). Exemple (`experiments/config/targets.json`) :
-
-```json
-{
-  "adapter": {
-    "url": "http://localhost:5007/ask",
-    "body_template": "{\"message\": {{prompt_json}}}",
-    "response_path": "response"
-  }
-}
-```
-
-- `{{prompt_json}}` est remplacé par le prompt encodé en JSON (ne pas rajouter de
-  guillemets), `{{prompt}}` par le prompt brut.
-- `response_path` : chemin pointé pour extraire le texte de l'assistant.
-
----
-
-## 7. Reproduire les expériences
 
 ```bash
-# T0.1 — prouver l'oracle avant tout (cibles PromptMe live requises)
-python -m experiments._smoke_oracle
-
-# Exp.1 — efficacité de l'attaquant (succès décidé par l'ORACLE)
-python -m experiments.runner  ...       # voir l'en-tête du module pour les options
-
-# Exp.2 — fiabilité des juges (rejoue les tuples d'Exp.1)
-python -m experiments.replay --neg 100
-
-# Agrégation des métriques Exp.1 (capture-rate, CSV)
-python -m experiments.metrics
-
-# Tier 2 — comparaison contrôlée vs PyRIT (venv isolé)
-python -m experiments.pyrit_compare --bench promptme --tag pyrit_promptme
+python -m pip install httpx litellm pydantic
 ```
 
----
+Il n'existe pas encore de fichier de dépendances verrouillé dans ce dépôt.
+Les scripts de génération de documents et d'analyse des annotations humaines
+peuvent demander des dépendances supplémentaires.
 
-## 8. Principes de conception (non négociables)
+Avant tout appel live :
 
-- **Fidèle à l'usage réel** — l'outil ne patche jamais la cible ; pas de shim de
-  confort. On force l'environnement/config au lancement.
-- **Générique, non réactif** — aucune connaissance spécifique à une cible n'est
-  codée en dur (préserve la revendication d'autonomie).
-- **BYOK strict** — les clés ne sont ni persistées, ni affichées, ni fabriquées.
-- **Anti-circularité** — l'outil est évalué contre des oracles **tiers et
-  déterministes**, pas contre son propre juge.
+1. Adapter les endpoints dans [targets.json](experiments/config/targets.json)
+   ou [gandalf.json](experiments/config/gandalf.json).
+2. Vérifier les modèles et le budget dans [models.json](experiments/config/models.json).
+3. Adapter le chargement des clés : `runner.py`, `replay.py` et
+   `pyrit_compare.py` lisent actuellement un fichier `.env` à un chemin WSL
+   propre à la machine d'origine. Définir uniquement des variables
+   d'environnement ne remplace pas ce chargeur.
+4. Utiliser des cibles dont le test est autorisé et vérifier les quotas
+   des fournisseurs. Les appels live peuvent être facturés.
+5. Employer un nouveau `--tag` pour isoler les nouvelles sorties des
+   résultats publiés.
 
----
+Après cette adaptation, les commandes du protocole comprennent :
 
-## 9. Pile technique
+```bash
+# Une cellule PromptMe, sorties isolées
+python -m experiments.runner --challenge LLM02 --attempts 6 --tag local_check
 
-FastAPI · Uvicorn · **LiteLLM** (accès multi-fournisseur) · httpx · Pydantic ·
-SQLite · Jinja2 · Tailwind (CDN) · HTMX + SSE. Comparateur : **PyRIT** (v0.14.0).
+# Rejouer les réponses de cette cellule avec les juges configurés
+python -m experiments.replay --source local_check --tag local_judges --neg 100
 
----
+# Agréger les résultats de l'attaquant
+python -m experiments.metrics local_check
+```
 
-## Licence & autorisation d'audit
+Le rejeu ne lance pas de nouvelles attaques, mais appelle les modèles juges.
+Le script [experiments/_smoke_oracle.py](experiments/_smoke_oracle.py)
+contient les vérifications de l'oracle ; son exécution requiert les cibles
+configurées.
 
-Projet académique. Toutes les cibles auditées sont **auto-hébergées ou
-explicitement ouvertes à l'attaque** (PromptMe, Gandalf). N'utilisez RedAgent que
-contre des systèmes que vous êtes **autorisé** à tester.
+La comparaison PyRIT utilise la version `0.14.0` dans le protocole d'origine.
+Prévoir un environnement virtuel séparé et consulter le
+[rapport de comparaison](report/tier2_comparaison_pyrit.md) avant de l'exécuter.
+
+## Limites et prochaines améliorations
+
+- Rendre les chemins de configuration et le chargement des clés portables.
+- Ajouter un fichier de dépendances reproductible et des tests automatisés.
+- Documenter séparément les composants d'interface décrits dans le mémoire.
+- Interpréter les mesures avec leurs effectifs, leurs incertitudes et les
+  conditions des bancs d'essai.
+
+## Auteur et cadre académique
+
+**SAWADOGO S Abdel K N** · Projet de fin d'études, cycle ingénieur en informatique  
+**FST Settat — Université Hassan 1er** · Encadrant : **Pr DABOUNOU**  
+Soutenance : **22 juin 2026**
+
+Projet destiné à l'évaluation autorisée d'applications LLM. Le dépôt ne
+contient actuellement pas de fichier de licence ; aucune licence open source
+particulière n'est revendiquée ici.
