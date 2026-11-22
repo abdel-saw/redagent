@@ -46,10 +46,14 @@ jobs:
         run: python -m pip check
 
       - name: Compile Python modules
-        run: python -m compileall -q app experiments tests
+        run: python -m compileall -q app experiments scripts tests
 
       - name: Run regression tests
         run: python -m unittest discover -s tests -v
 
+      - name: Check committed demo data
+        run: python scripts/build_demo.py --check
+
       - name: Analyze published results without site packages
         run: python -S -m experiments.metrics mtxA_seedmut
+
