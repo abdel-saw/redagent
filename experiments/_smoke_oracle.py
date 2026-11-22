@@ -24,11 +24,13 @@ import asyncio
 import json
 from pathlib import Path
 
+from experiments.configuration import config_dir
+
 from app.target_adapter import AdapterConfig, send_prompt
 from experiments.oracle import evaluate, load_specs
 
 ROOT = Path(__file__).resolve().parent
-CFG = ROOT / "config" / "targets.json"
+CFG = config_dir() / "targets.json"
 LIVE_RETRIES = 4
 
 # Payloads connus-bons (writeups officiels PromptMe). Single-turn JSON.
@@ -130,3 +132,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
